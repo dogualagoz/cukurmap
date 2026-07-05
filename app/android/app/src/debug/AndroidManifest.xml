@@ -4,4 +4,7 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Dev API'si (10.0.2.2) HTTP olduğu için sadece DEBUG build'de
+         cleartext'e izin verilir. Release'te kapalı kalır. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>
