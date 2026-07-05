@@ -1,0 +1,23 @@
+# Dev ortamı: sadece PostGIS. API lokalde `npm run start:dev` ile çalışır.
+# Prod compose (api servisi + nginx) Faz 3'te eklenecek.
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: cukurmap-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cukurmap}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-cukurmap}
+    ports:
+      # Sadece loopback'e bağla — DB dışarıya asla açılmaz
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cukurmap} -d ${POSTGRES_DB:-cukurmap}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

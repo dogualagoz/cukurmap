@@ -1,0 +1,105 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
+}
+
+model User {
+  id         String   @id @default(uuid()) @db.Uuid
+  deviceHash String   @unique @map("device_hash")
+  nickname   String   @db.VarChar(40)
+  isBanned   Boolean  @default(false) @map("is_banned")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastSeenAt DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+
+  reports Report[]
+  votes   Vote[]
+
+  @@map("users")
+}
+
+model Province {
+  id         Int                                       @id @db.SmallInt
+  name       String
+  slug       String                                    @unique
+  hashtag    String
+  population Int
+  boundary   Unsupported("geometry(MultiPolygon,4326)")
+
+  reports Report[]
+
+  @@map("provinces")
+}
+
+enum ReportCategory {
+  cukur
+  bozuk_asfalt
+  rogar
+  kasis
+  diger
+
+  @@map("report_category")
+}
+
+enum ReportStatus {
+  active
+  fixed
+  hidden
+  deleted
+
+  @@map("report_status")
+}
+
+enum VoteType {
+  confirm
+  fixed
+  still_there
+  complaint
+
+  @@map("vote_type")
+}
+
+model Report {
+  id              String                          @id @default(uuid()) @db.Uuid
+  userId          String                          @map("user_id") @db.Uuid
+  location        Unsupported("geometry(Point,4326)")
+  provinceId      Int?                            @map("province_id") @db.SmallInt
+  severity        Int                             @db.SmallInt
+  category        ReportCategory                  @default(cukur)
+  description     String?                         @db.VarChar(280)
+  photoPath       String?                         @map("photo_path")
+  status          ReportStatus                    @default(active)
+  confirmCount    Int                             @default(0) @map("confirm_count")
+  fixedCount      Int                             @default(0) @map("fixed_count")
+  stillThereCount Int                             @default(0) @map("still_there_count")
+  complaintCount  Int                             @default(0) @map("complaint_count")
+  createdAt       DateTime                        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime                        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user     User      @relation(fields: [userId], references: [id])
+  province Province? @relation(fields: [provinceId], references: [id])
+  votes    Vote[]
+
+  @@index([provinceId, status])
+  @@index([userId])
+  @@map("reports")
+}
+
+model Vote {
+  id        String   @id @default(uuid()) @db.Uuid
+  reportId  String   @map("report_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  type      VoteType
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([reportId, userId, type])
+  @@map("votes")
+}
