@@ -1,23 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/prefs_keys.dart';
 import 'core/router.dart';
 import 'core/strings.dart';
 import 'core/theme.dart';
 
-void main() {
-  runApp(const ProviderScope(child: CukurMapApp()));
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  final hasSeenOnboarding = prefs.getBool(PrefsKeys.hasSeenOnboarding) ?? false;
+  final router = buildRouter(hasSeenOnboarding ? '/camera' : '/onboarding');
+  runApp(ProviderScope(child: CukurMapApp(router: router)));
 }
 
 class CukurMapApp extends ConsumerWidget {
-  const CukurMapApp({super.key});
+  const CukurMapApp({super.key, required this.router});
+
+  final GoRouter router;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
       title: Strings.appName,
-      theme: AppTheme.dark,
-      darkTheme: AppTheme.dark,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.light,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

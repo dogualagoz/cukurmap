@@ -1,3 +1,4 @@
+import 'package:cukur_map/core/router.dart';
 import 'package:cukur_map/core/strings.dart';
 import 'package:cukur_map/main.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,7 +12,8 @@ void main() {
     // zamanında hiç sonuçlanmaz, bu yüzden pumpAndSettle KULLANMA — sonsuz
     // CircularProgressIndicator animasyonunda zaman aşımına uğrar. Sekme
     // barı ilk frame'de statik olarak render olur, tek pump yeterli.
-    await tester.pumpWidget(const ProviderScope(child: CukurMapApp()));
+    // Onboarding akışını atlamak için router doğrudan kamera sekmesinden başlatılıyor.
+    await tester.pumpWidget(ProviderScope(child: CukurMapApp(router: buildRouter('/camera'))));
     await tester.pump();
 
     expect(find.text(Strings.tabCamera), findsOneWidget);
