@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { UserThrottlerGuard } from './user-throttler.guard';
 
 @Global()
 @Module({
@@ -17,7 +18,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard],
-  exports: [JwtModule, JwtAuthGuard],
+  providers: [AuthService, JwtAuthGuard, UserThrottlerGuard],
+  exports: [JwtModule, JwtAuthGuard, UserThrottlerGuard],
 })
 export class AuthModule {}
