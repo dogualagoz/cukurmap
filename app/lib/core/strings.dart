@@ -23,6 +23,9 @@ abstract final class Strings {
       'Kameraya izin vermezsen çukurları hayal gücünle bildirmen lazım.';
   static const locationPermissionDenied =
       'Konum izni olmadan çukuru haritada nereye koyacağız, tahminle mi?';
+  static const cameraFrameHint = 'Çukuru çerçeveye al';
+  static const cameraShutterLabel = 'ÇEK';
+  static const cameraAutoLabel = 'OTO';
 
   // Harita
   static const emptyMap =
@@ -31,6 +34,7 @@ abstract final class Strings {
   static const filterSeverity = 'Tehlike seviyesi';
   static const filterStatus = 'Durum';
   static const filterAll = 'Hepsi';
+  static const mapSearchHint = 'Mahalle veya cadde ara';
   static const statusActive = 'Hâlâ orada';
   static const statusFixed = 'Onarıldı';
   static const statusHidden = 'Şikayet edildi';
@@ -55,6 +59,7 @@ abstract final class Strings {
       'Yavaş ol asfalt kahramanı, birazdan tekrar dene.';
   static const reportLocationLoading = 'Konumun bulunuyor...';
   static const reportAdjustPin = 'Pini sürükleyerek konumu düzelt';
+  static const reportLocationLabel = 'Konum';
 
   // 409 mükerrer bildirim
   static const duplicateTitle = 'Bu çukur tanıdık geldi';
@@ -75,10 +80,6 @@ abstract final class Strings {
   static const voteThanks = 'Oyun kaydedildi, teşekkürler!';
   static const voteError = 'Oy kaydedilemedi, tekrar dene.';
 
-  // İstatistik
-  static const statsComingSoon =
-      'Çukur Ligi puan durumu hazırlanıyor. Şehrin şimdiden antrenmanda.';
-
   // Profil
   static const profileYourReports = 'Bildirimlerin';
   static const profileConfirms = 'Doğrulama';
@@ -87,9 +88,49 @@ abstract final class Strings {
       'Sunucuya ulaşamadık. Rumuzun kaçmıyor, merak etme.';
   static const retry = 'Tekrar dene';
 
-  // Tehlike seviyeleri (Faz 1'de kullanılacak)
-  static const severity1 = 'Tümsek sayılır';
-  static const severity2 = 'Jant sallanır';
-  static const severity3 = 'Lastik gider';
-  static const severity4 = 'Araç yutar';
+  // Tehlike seviyeleri
+  static const severity1 = 'Hafif tümsek';
+  static const severity2 = 'Jant düşmanı';
+  static const severity3 = 'Araba yutar';
+  static const severity4 = 'Kayıp aracımız var';
+
+  // Karşılama (onboarding)
+  static const onboardingHeadline = 'Yoldaki çukuru\n3 saniyede işaretle.';
+  static const onboardingBody =
+      'Fotoğrafla, konumu onayla, bildir. Belediye görsün, mahalle bilsin — '
+      'çukur artık görünmez değil.';
+  static const onboardingCta = 'Başla';
+  static const onboardingHow = 'Nasıl çalışır?';
+  static const onboardingHowBody =
+      'Çukuru fotoğrafla veya fotoğrafsız bildir, konumu haritada onayla, '
+      'tehlike seviyesini seç. Diğer kullanıcılar oylayarak "hâlâ orada mı, '
+      'onarıldı mı" diye günceller.';
+  static const dialogOk = 'Tamam';
+
+  // Başarı ekranı
+  static const successTitle = 'Çukur haritada!';
+  static const successBody =
+      'Bildirimin haritaya eklendi. Belediye görsün, mahalle bilsin — '
+      'çukur artık görünmez değil.';
+  static const successShare = "'te paylaş";
+  static const successViewMap = 'Haritada gör';
+  static const successJustNow = 'az önce';
+
+  // Çukur Ligi
+  static const leagueTitle = 'Çukur Ligi';
+  static const leagueWeekly = 'HAFTALIK';
+  static const leagueSubtitle = 'Bu hafta en çok çukur bildirilen şehirler.';
+  static const leagueResolved = 'çözüldü';
+  static const leagueVerifications = 'doğrulama';
+  static const leaguePotholes = 'çukur';
+  static const leagueThisWeek = 'BU HAFTA';
+
+  // Profil rozetleri
+  static const badgeFirstReport = 'İlk Çukur';
+  static const badgeNeighborhoodWatch = 'Mahalle Bekçisi';
+  static const badge50Reports = '50 Bildirim';
+  static const badgeViralLocked = 'Viral · kilitli';
+  static const profileBadgesTitle = 'ROZETLER';
+  static const profileReportsTitle = 'BİLDİRİMLERİM';
+  static const profileResolved = 'Çözüldü';
 }
