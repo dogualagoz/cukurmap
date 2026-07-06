@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../core/strings.dart';
+import '../../core/theme.dart';
+import '../../core/widgets/pill_button.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -99,32 +101,31 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text(Strings.appName)),
+      backgroundColor: AppTheme.bgDark,
       body: _buildBody(context),
     );
   }
 
   Widget _buildBody(BuildContext context) {
     if (_permissionDenied) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.photo_camera_outlined, size: 72),
-              const SizedBox(height: 16),
-              Text(
-                Strings.cameraPermissionDenied,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: _reportWithoutPhoto,
-                child: const Text(Strings.reportWithoutPhoto),
-              ),
-            ],
+      return SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.photo_camera_outlined, size: 72, color: AppTheme.textSecondaryDark),
+                const SizedBox(height: 16),
+                Text(
+                  Strings.cameraPermissionDenied,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 16, height: 1.4),
+                ),
+                const SizedBox(height: 24),
+                PrimaryPillButton(label: Strings.reportWithoutPhoto, onPressed: _reportWithoutPhoto, height: 52),
+              ],
+            ),
           ),
         ),
       );
@@ -133,42 +134,194 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     final controller = _controller;
     final initializeFuture = _initializeFuture;
     if (controller == null || initializeFuture == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator(color: AppTheme.accent));
     }
 
     return FutureBuilder<void>(
       future: initializeFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator(color: AppTheme.accent));
         }
         return Stack(
           fit: StackFit.expand,
           children: [
             CameraPreview(controller),
+            IgnorePointer(
+              child: Center(
+                child: Container(
+                  width: 196,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2),
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 24,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: AppTheme.bgDark.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(9999),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(shape: BoxShape.circle, color: AppTheme.accent),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          Strings.cameraFrameHint,
+                          style: TextStyle(color: AppTheme.bgLight, fontSize: 14, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
             Positioned(
               left: 0,
               right: 0,
-              bottom: 24,
-              child: Column(
-                children: [
-                  FloatingActionButton.large(
-                    heroTag: 'capture',
-                    onPressed: _capture,
-                    child: const Icon(Icons.camera_alt),
+              bottom: 0,
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(26, 0, 26, 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Center(
+                        child: OutlinedButton.icon(
+                          onPressed: _reportWithoutPhoto,
+                          icon: const Icon(Icons.edit_outlined, size: 16, color: AppTheme.accent),
+                          label: const Text(Strings.reportWithoutPhoto),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppTheme.bgLight,
+                            backgroundColor: AppTheme.bgDark.withValues(alpha: 0.45),
+                            side: BorderSide(color: Colors.white.withValues(alpha: 0.28)),
+                            shape: const StadiumBorder(),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: AppTheme.cardDark,
+                              borderRadius: BorderRadius.circular(13),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
+                            ),
+                          ),
+                          Column(
+                            children: [
+                              GestureDetector(
+                                onTap: _capture,
+                                child: const _PulsingShutter(),
+                              ),
+                              const SizedBox(height: 9),
+                              Text(
+                                Strings.cameraShutterLabel,
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  fontSize: 11,
+                                  letterSpacing: 1.2,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: AppTheme.bgDark.withValues(alpha: 0.5),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+                            ),
+                            child: const Center(
+                              child: Text(Strings.cameraAutoLabel, style: TextStyle(color: AppTheme.accent, fontSize: 10, fontWeight: FontWeight.w600)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: _reportWithoutPhoto,
-                    style: TextButton.styleFrom(foregroundColor: Colors.white),
-                    child: const Text(Strings.reportWithoutPhoto),
-                  ),
-                ],
+                ),
               ),
             ),
           ],
         );
       },
+    );
+  }
+}
+
+class _PulsingShutter extends StatefulWidget {
+  const _PulsingShutter();
+
+  @override
+  State<_PulsingShutter> createState() => _PulsingShutterState();
+}
+
+class _PulsingShutterState extends State<_PulsingShutter> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 80,
+      height: 80,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: AppTheme.accent, width: 4),
+        boxShadow: [BoxShadow(color: AppTheme.accent.withValues(alpha: 0.35), blurRadius: 22)],
+      ),
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final t = _controller.value;
+          final scale = 1 - (0.08 * t);
+          final opacity = 1 - (0.18 * t);
+          return Opacity(
+            opacity: opacity,
+            child: Transform.scale(scale: scale, child: child),
+          );
+        },
+        child: const DecoratedBox(
+          decoration: BoxDecoration(shape: BoxShape.circle, color: AppTheme.accent),
+        ),
+      ),
     );
   }
 }

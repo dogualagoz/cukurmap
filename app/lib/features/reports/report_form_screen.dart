@@ -6,19 +6,15 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/strings.dart';
 import '../../core/theme.dart';
+import '../../core/widgets/pill_button.dart';
+import '../../core/widgets/severity_badge.dart';
 import 'data/reports_api.dart';
 import 'models/report.dart';
-
-const _severityLabels = {
-  1: Strings.severity1,
-  2: Strings.severity2,
-  3: Strings.severity3,
-  4: Strings.severity4,
-};
 
 const _categoryLabels = {
   ReportCategory.cukur: Strings.categoryCukur,
@@ -53,6 +49,7 @@ class _ReportFormScreenState extends ConsumerState<ReportFormScreen> {
   void initState() {
     super.initState();
     _locate();
+    _descriptionController.addListener(() => setState(() {}));
   }
 
   @override
@@ -100,7 +97,7 @@ class _ReportFormScreenState extends ConsumerState<ReportFormScreen> {
     if (position == null || _submitting) return;
     setState(() => _submitting = true);
     try {
-      await ref.read(reportsApiProvider).createReport(
+      final report = await ref.read(reportsApiProvider).createReport(
             lat: position.latitude,
             lng: position.longitude,
             severity: _severity,
@@ -112,10 +109,7 @@ class _ReportFormScreenState extends ConsumerState<ReportFormScreen> {
           );
       if (!mounted) return;
       ref.invalidate(reportMarkersProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(Strings.reportSuccess)),
-      );
-      context.go('/map');
+      context.pushReplacement('/reports/success', extra: report);
     } on ReportConflictException catch (e) {
       if (!mounted) return;
       await _showDuplicateDialog(e);
@@ -168,69 +162,158 @@ class _ReportFormScreenState extends ConsumerState<ReportFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final hasPhoto = widget.photoBytes != null;
     return Scaffold(
-      appBar: AppBar(title: const Text(Strings.reportFormTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      backgroundColor: AppTheme.bgLight,
+      body: Stack(
         children: [
-          if (widget.photoBytes != null) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.memory(
-                widget.photoBytes!,
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
+          ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              if (hasPhoto) _buildPhotoHeader(context) else _buildPlainHeader(context),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 140),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _sectionLabel(Strings.reportLocationLabel.toUpperCase()),
+                    const SizedBox(height: 10),
+                    _buildLocationPicker(context),
+                    const SizedBox(height: 24),
+                    _sectionLabel(Strings.reportSeverityLabel.toUpperCase()),
+                    const SizedBox(height: 10),
+                    _buildSeverityPicker(),
+                    const SizedBox(height: 24),
+                    _sectionLabel(Strings.reportCategoryLabel.toUpperCase()),
+                    const SizedBox(height: 10),
+                    _buildCategoryPicker(),
+                    const SizedBox(height: 24),
+                    _sectionLabel(Strings.reportDescriptionLabel.toUpperCase()),
+                    const SizedBox(height: 10),
+                    _buildDescriptionField(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [AppTheme.bgLight.withValues(alpha: 0), AppTheme.bgLight],
+                  stops: const [0, 0.32],
+                ),
+              ),
+              child: PrimaryPillButton(
+                label: _submitting ? Strings.reportSubmitting : Strings.reportSubmit,
+                onPressed: _position == null || _submitting ? null : _submit,
               ),
             ),
-            const SizedBox(height: 16),
-          ],
-          _buildLocationPicker(context),
-          const SizedBox(height: 24),
-          Text(Strings.reportSeverityLabel, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          _buildSeverityPicker(),
-          const SizedBox(height: 24),
-          Text(Strings.reportCategoryLabel, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          _buildCategoryPicker(),
-          const SizedBox(height: 24),
-          Text(Strings.reportDescriptionLabel, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _descriptionController,
-            maxLength: 280,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              hintText: Strings.reportDescriptionHint,
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 8),
-          FilledButton(
-            onPressed: _position == null || _submitting ? null : _submit,
-            child: Text(_submitting ? Strings.reportSubmitting : Strings.reportSubmit),
           ),
         ],
       ),
     );
   }
 
+  Widget _sectionLabel(String text) => Text(text, style: AppTheme.mono(color: AppTheme.textSecondaryLight));
+
+  Widget _buildPhotoHeader(BuildContext context) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
+          child: Image.memory(widget.photoBytes!, height: 290, width: double.infinity, fit: BoxFit.cover),
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            height: 130,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black.withValues(alpha: 0.42), Colors.transparent],
+              ),
+              borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(0), bottomRight: Radius.circular(0)),
+            ),
+          ),
+        ),
+        SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Row(
+              children: [
+                _circleBackButton(context),
+                const SizedBox(width: 12),
+                Text(
+                  Strings.reportFormTitle,
+                  style: GoogleFonts.spaceGrotesk(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 19,
+                    shadows: const [Shadow(color: Colors.black45, blurRadius: 6)],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlainHeader(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: Row(
+          children: [
+            _circleBackButton(context, dark: true),
+            const SizedBox(width: 12),
+            Text(Strings.reportFormTitle, style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600, fontSize: 19, color: AppTheme.bgDark)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _circleBackButton(BuildContext context, {bool dark = false}) {
+    return GestureDetector(
+      onTap: () => context.pop(),
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: dark ? AppTheme.bgDark.withValues(alpha: 0.06) : Colors.white.withValues(alpha: 0.85),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(Icons.arrow_back_ios_new, size: 16, color: AppTheme.bgDark),
+      ),
+    );
+  }
+
   Widget _buildLocationPicker(BuildContext context) {
     if (_locating) {
-      return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
+      return const SizedBox(height: 132, child: Center(child: CircularProgressIndicator()));
     }
     if (_position == null) {
       return SizedBox(
-        height: 200,
+        height: 132,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                _locationError ?? Strings.locationPermissionDenied,
-                textAlign: TextAlign.center,
-              ),
+              Text(_locationError ?? Strings.locationPermissionDenied, textAlign: TextAlign.center),
               const SizedBox(height: 12),
               OutlinedButton(onPressed: _locate, child: const Text(Strings.retry)),
             ],
@@ -238,57 +321,66 @@ class _ReportFormScreenState extends ConsumerState<ReportFormScreen> {
         ),
       );
     }
-    return Column(
-      children: [
-        SizedBox(
-          height: 200,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Stack(
-              alignment: Alignment.center,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: SizedBox(
+        height: 132,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            FlutterMap(
+              options: MapOptions(
+                initialCenter: _position!,
+                initialZoom: 17,
+                onPositionChanged: (camera, hasGesture) {
+                  if (hasGesture) setState(() => _position = camera.center);
+                },
+              ),
               children: [
-                FlutterMap(
-                  options: MapOptions(
-                    initialCenter: _position!,
-                    initialZoom: 17,
-                    onPositionChanged: (camera, hasGesture) {
-                      if (hasGesture) setState(() => _position = camera.center);
-                    },
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.cukurmap.app',
-                    ),
-                  ],
-                ),
-                IgnorePointer(
-                  child: Icon(
-                    Icons.location_pin,
-                    size: 40,
-                    color: AppTheme.severityColors[_severity],
-                  ),
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.cukurmap.app',
                 ),
               ],
             ),
-          ),
+            IgnorePointer(
+              child: Icon(Icons.location_pin, size: 40, color: severityColor(_severity)),
+            ),
+            Positioned(
+              left: 12,
+              bottom: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(9999),
+                ),
+                child: Text(
+                  Strings.reportAdjustPin,
+                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.bgDark),
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(Strings.reportAdjustPin, style: Theme.of(context).textTheme.bodySmall),
-      ],
+      ),
     );
   }
 
   Widget _buildSeverityPicker() {
-    return Wrap(
-      spacing: 8,
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 10,
+      crossAxisSpacing: 10,
+      childAspectRatio: 2.7,
       children: [
-        for (final entry in _severityLabels.entries)
-          ChoiceChip(
-            label: Text(entry.value),
-            selected: _severity == entry.key,
-            selectedColor: AppTheme.severityColors[entry.key]?.withValues(alpha: 0.5),
-            onSelected: (_) => setState(() => _severity = entry.key),
+        for (final level in const [1, 2, 3, 4])
+          _SeverityCard(
+            severity: level,
+            selected: _severity == level,
+            onTap: () => setState(() => _severity = level),
           ),
       ],
     );
@@ -296,15 +388,119 @@ class _ReportFormScreenState extends ConsumerState<ReportFormScreen> {
 
   Widget _buildCategoryPicker() {
     return Wrap(
-      spacing: 8,
+      spacing: 9,
+      runSpacing: 9,
       children: [
         for (final entry in _categoryLabels.entries)
-          ChoiceChip(
-            label: Text(entry.value),
+          _CategoryPill(
+            label: entry.value,
             selected: _category == entry.key,
-            onSelected: (_) => setState(() => _category = entry.key),
+            onTap: () => setState(() => _category = entry.key),
           ),
       ],
+    );
+  }
+
+  Widget _buildDescriptionField() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          TextField(
+            controller: _descriptionController,
+            maxLength: 280,
+            maxLines: 3,
+            style: const TextStyle(fontSize: 15),
+            decoration: const InputDecoration(
+              hintText: Strings.reportDescriptionHint,
+              border: InputBorder.none,
+              counterText: '',
+              isDense: true,
+            ),
+          ),
+          Text(
+            '${_descriptionController.text.length}/280',
+            style: AppTheme.mono(color: AppTheme.textSecondaryLight, fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SeverityCard extends StatelessWidget {
+  const _SeverityCard({required this.severity, required this.selected, required this.onTap});
+
+  final int severity;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = severityColor(severity);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? color.withValues(alpha: 0.14) : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: selected ? color : Colors.black.withValues(alpha: 0.07), width: selected ? 2 : 1),
+        ),
+        child: Row(
+          children: [
+            SeverityDot(severity: severity, size: 14),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    severityLabel(severity),
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontWeight: selected ? FontWeight.w700 : FontWeight.w600, fontSize: 14, color: AppTheme.bgDark),
+                  ),
+                  Text('Seviye $severity', style: TextStyle(fontSize: 11.5, color: AppTheme.textSecondaryLight)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryPill extends StatelessWidget {
+  const _CategoryPill({required this.label, required this.selected, required this.onTap});
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.bgDark : Colors.white,
+          borderRadius: BorderRadius.circular(9999),
+          border: selected ? null : Border.all(color: Colors.black.withValues(alpha: 0.08)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? AppTheme.bgLight : AppTheme.textSecondaryLightAlt,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            fontSize: 14,
+          ),
+        ),
+      ),
     );
   }
 }
