@@ -1,9 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/camera/camera_screen.dart';
 import '../features/map/map_screen.dart';
 import '../features/profile/profile_screen.dart';
+import '../features/reports/report_form_screen.dart';
 import '../features/stats/stats_screen.dart';
 import 'strings.dart';
 
@@ -11,6 +14,10 @@ import 'strings.dart';
 final router = GoRouter(
   initialLocation: '/camera',
   routes: [
+    GoRoute(
+      path: '/reports/new',
+      builder: (_, state) => ReportFormScreen(photoBytes: state.extra as Uint8List?),
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, shell) => _TabShell(shell: shell),
       branches: [

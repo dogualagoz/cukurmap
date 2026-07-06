@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Çukur fotoğrafı çekmek için kameraya ihtiyacımız var, başka niyetimiz yok.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Çukuru doğru yere iğnelemek için konumunu kullanıyoruz.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

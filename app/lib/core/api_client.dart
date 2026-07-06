@@ -22,3 +22,10 @@ final dioProvider = Provider<Dio>((ref) {
   );
   return dio;
 });
+
+/// `/uploads/...` gibi relative dönen fotoğraf yollarını tam URL'e çevirmek
+/// için sunucu origin'i (scheme+host+port, `/api/v1` prefix'i olmadan).
+final apiOriginProvider = Provider<String>((ref) {
+  final baseUrl = ref.watch(dioProvider).options.baseUrl;
+  return Uri.parse(baseUrl).replace(path: '', query: '').toString();
+});

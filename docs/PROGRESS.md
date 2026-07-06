@@ -1,6 +1,6 @@
 # PROGRESS — Oturumlar Arası Devir
 
-## Durum: Faz 1 API tarafı TAMAMLANDI ✅ (2026-07-06) — sırada Flutter (kamera + harita)
+## Durum: Faz 1 API + Flutter TAMAMLANDI ✅ (2026-07-06) — sonraki: cihaz e2e testi + Faz 2 planlama
 
 ### Bitti (Faz 0)
 - [x] Plan onaylandı (kararlar: Prisma 6, Flutter stable, offline PostGIS il tespiti)
@@ -34,16 +34,43 @@
       karşı çalıştırılabilir (beforeAll'da reports/votes TRUNCATE edilir)
 - [x] Doğrulama: api build/lint/e2e ✓ (16/16), npm audit 0 vulnerability
 
-### Kaldı (Faz 1 — Flutter, sonraki oturum)
-- [ ] Flutter: kamera akışı (camera paketi) → önizleme (pin sürükleme, tehlike seviyesi) → bildir
-- [ ] Flutter: harita (flutter_map + clustering + filtreler + detay sheet + oylama)
-- [ ] Faz 1 paketleri eklenecek: camera, geolocator, flutter_map, flutter_map_marker_cluster, latlong2 (+izin konfigürasyonları: iOS Info.plist kamera/konum, Android manifest)
-- [ ] app/lib tarafında reports API client'ı (multipart upload dahil) + Riverpod state
+### Bitti (Faz 1 — Flutter)
+- [x] Paketler: camera ^0.11.0+2, geolocator ^13.0.2, permission_handler ^11.3.1, flutter_map ^7.0.2,
+      flutter_map_marker_cluster ^1.4.0, latlong2 ^0.9.1. iOS: Info.plist'e NSCameraUsageDescription +
+      NSLocationWhenInUseUsageDescription. Android: manifest'e CAMERA + ACCESS_FINE_LOCATION izinleri.
+- [x] Reports domain: app/lib/features/reports/models/report.dart (ReportCategory/ReportStatus/VoteType
+      enum'ları + wireName mapping; ReportMarker, ReportDetail, ReportConflictException modelleri)
+- [x] Reports API client: app/lib/features/reports/data/reports_api.dart (createReport multipart+409
+      nearbyReportId yakalama, getReports bbox query, getReport, vote) + reportsApiProvider,
+      ReportsQuery (Dart record), reportMarkersProvider, reportDetailProvider (autoDispose.family)
+- [x] apiOriginProvider: app/lib/core/api_client.dart'a eklendi (photoUrl relative→full URL)
+- [x] Kamera: app/lib/features/camera/camera_screen.dart (gerçek canlı önizleme + çekim +
+      "fotoğrafsız bildir" butonu, fallback ekran izin reddedilirse)
+- [x] Rapor formu: app/lib/features/reports/report_form_screen.dart (fotoğraf önizleme, geolocator
+      otomatik konum, flutter_map üzerinde merkez-pin sabit sürükleme deseniyle konum düzeltme,
+      tehlike seviyesi 4 chip, kategori 5 seçenek, açıklama max280, POST /reports)
+- [x] 409 mükerrer dialog: "bu çukur zaten bildirilmiş" → confirm oyu. 429/genel hatalar ayrı mesajlar.
+- [x] Harita: app/lib/features/map/map_screen.dart (flutter_map + clustering, bbox debounce 400ms,
+      severity filtre çubuğu, marker'lar rengiyle boyanıyor, tıklama → bottom sheet)
+- [x] Detay sheet: app/lib/features/reports/report_detail_sheet.dart (fotoğraf, kategori, açıklama,
+      il, tarih, 4 oylama butonu, her oy sonrası invalidate)
+- [x] UI metinleri: app/lib/core/strings.dart'a ~35 yeni string (rapor formu, hatalar, mükerrer,
+      filtre, oylama, kategori etiketleri); cameraComingSoon/mapComingSoon kaldırıldı.
+- [x] Doğrulama: flutter analyze ✓ (0 issue), flutter test ✓ (widget_test.dart, kamera/permission
+      platform channel kısıtı yüzünden sadece sekme render test), iOS `flutter build ios --simulator
+      --no-codesign` ✓
 
 ### Bilinen sorunlar / notlar
 - Bu Mac'te Android SDK YOK → APK build doğrulanamadı (iOS build ✓). Android'i kullanıcı test eder;
-  uygulama önce iOS'ta yayınlanacak, Android doğrulaması gerekmiyor.
+  uygulama önce iOS'ta yayınlanacak, Android doğrulaması gerekmiyor. Android manifest izinleri eklendi
+  ama build/test doğrulanmadı.
 - Cihazda test: `flutter run --dart-define=API_BASE_URL=http://MAC_IP:3000/api/v1` (fiziksel cihaz için)
+- Kamera + konum izinleri gerektiren gerçek uçtan uca akış (çekim → bildir → haritada görme) simulator/cihazda
+  henüz kullanıcı tarafından denenmedi — flutter test platform channel kısıtı yüzünden bunu kapsamıyor.
+  Fiziksel cihaz/iOS simulator'de e2e testi yapması gerekir.
+- flutter_map_marker_cluster ^1.4.1 arzu edildi ama pub.dev'de en yüksek uyumlu sürüm ^1.4.0 (^1.4.0 kullanılıyor).
+- Rapor formunda "pin sürükleme" UX'i: ayrı draggable-marker paketi yerine "merkez-pin sabit, kullanıcı haritayı
+  sürükler" (Uber/Google Maps tarzı) deseniyle çözüldü (flutter_map'in kendisinde draggable marker widget'ı yok).
 - Dev secrets api/.env ve docker/.env'de (gitignore'lu, openssl rand ile üretildi). VPS deploy'da yenileri üretilecek.
 - Prisma migrate dev, postgis image'ının hazır extension'ı yüzünden drift/reset isteyebilir;
   yeni migration akışı: `prisma migrate diff` ile SQL üret → migrations klasörüne koy → `prisma migrate deploy`.
@@ -55,5 +82,6 @@
 
 ### Sonraki oturumun ilk adımı
 1. `docker compose -f docker/docker-compose.yml up -d` (DB) — Docker Desktop kapalıysa önce aç
-2. Faz 1'e Flutter tarafından devam: camera + geolocator + flutter_map paketlerini ekle,
-   docs/API.md'deki POST /reports sözleşmesine göre kamera→önizleme→bildir akışını kur
+2. Faz 1 e2e testi: iOS simulator'de veya fiziksel cihazda çekim → bildir → harita filter/oylama akışını test et
+3. PROGRESS.md ve docs/API.md gözden geçir; Faz 2 (stats/lig/geçmiş raporlar) vs. cilalama işleri (UI tweak,
+   error handling vb.) arasında karar ver, başla
