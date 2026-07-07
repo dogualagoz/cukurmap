@@ -1,0 +1,63 @@
+# Prod compose — VPS'te çalışır. Kullanım:
+#   cp .env.prod.example .env.prod   # doldur (openssl rand -hex 32)
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+# İlk kurulumda migration + seed:
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm migrate
+# SSL: Plesk'in nginx'i ${DOMAIN} için reverse proxy + Let's Encrypt yönetir;
+# api sadece loopback'te 127.0.0.1:${API_PORT} dinler, dışarıya Plesk üzerinden açılır.
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: cukurmap-db-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cukurmap}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-cukurmap}
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cukurmap} -d ${POSTGRES_DB:-cukurmap}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ../api
+    container_name: cukurmap-api-prod
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cukurmap}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-cukurmap}?schema=public
+      PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      DEVICE_PEPPER: ${DEVICE_PEPPER:?DEVICE_PEPPER is required}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:?ADMIN_TOKEN is required}
+      FIXED_THRESHOLD: ${FIXED_THRESHOLD:-5}
+      HIDE_THRESHOLD: ${HIDE_THRESHOLD:-3}
+    ports:
+      # Sadece loopback — dışarıya Plesk nginx reverse proxy ile açılır
+      - "127.0.0.1:${API_PORT:-3000}:3000"
+    volumes:
+      - uploads:/app/uploads
+
+  # Tek seferlik migration (ve istenirse seed) — build stage'inde prisma CLI var.
+  migrate:
+    build:
+      context: ../api
+      target: build
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cukurmap}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-cukurmap}?schema=public
+    command: sh -c "npx prisma migrate deploy && npm run seed"
+
+volumes:
+  pgdata_prod:
+  uploads:
