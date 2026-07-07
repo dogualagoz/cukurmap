@@ -1,4 +1,4 @@
-package com.example.cukur_map
+package com.cukurmap.app
 
 import io.flutter.embedding.android.FlutterActivity
 

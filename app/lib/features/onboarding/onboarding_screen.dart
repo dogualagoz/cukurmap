@@ -13,6 +13,25 @@ class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
   Future<void> _start(BuildContext context) async {
+    final promised = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.cardDark,
+        title: Text(Strings.drivingWarningTitle, style: TextStyle(color: AppTheme.bgLight)),
+        content: Text(
+          Strings.drivingWarningBody,
+          style: TextStyle(color: AppTheme.textSecondaryDark, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text(Strings.drivingWarningOk),
+          ),
+        ],
+      ),
+    );
+    if (promised != true) return;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(PrefsKeys.hasSeenOnboarding, true);
     if (context.mounted) context.go('/camera');
