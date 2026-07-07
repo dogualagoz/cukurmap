@@ -29,10 +29,15 @@ Validation: class-validator + global ValidationPipe(whitelist) · Rate limit: @n
   **Bilinen sınırlama:** oy değiştirme/geri alma yok — bir kullanıcı bir rapora aynı
   tip oyu sadece bir kez verebilir (toggle/undo gelecekte ele alınacak).
 
-## İstatistik (Faz 2)
-- `GET /stats/cities?sort=total|per_capita` → Çukur Ligi
-- `GET /stats/cities/:slug` → toplam, çözülme oranı, "en efsane çukur"
-- `GET /stats/weekly` → haftalık özet
+## İstatistik
+- `GET /stats/cities?sort=total|per_capita` (varsayılan `total`) → Çukur Ligi, son 7 gün
+  penceresi (`status != deleted`, `created_at >= now() - 7 gün`), rapor sayısına (veya
+  `per_capita` için nüfusa bölünmüş orana) göre azalan sıralı, en fazla 20 il:
+  `[{name, slug, reportCount, resolvedPct, verifications}]`
+  (`resolvedPct`: pencere içindeki raporların `fixed` olma yüzdesi; `verifications`: toplam
+  `confirmCount`). Hiç raporu olmayan iller listede yer almaz.
+- `GET /stats/cities/:slug` → toplam, çözülme oranı, "en efsane çukur" — henüz implement edilmedi
+- `GET /stats/weekly` → haftalık özet — henüz implement edilmedi
 
 ## Admin (X-Admin-Token header, env'den, timing-safe compare)
 - `DELETE /admin/reports/:id`

@@ -8,6 +8,7 @@ import { UserThrottlerGuard } from './auth/user-throttler.guard';
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { ReportsModule } from './reports/reports.module';
+import { StatsModule } from './stats/stats.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -18,6 +19,7 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     UsersModule,
     ReportsModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: UserThrottlerGuard }],
