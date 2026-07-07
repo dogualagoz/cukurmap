@@ -1,19 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/strings.dart';
 import '../../core/theme.dart';
-
-/// Şehir sıralaması — gerçek API Faz 2'de eklenecek (bkz. docs/PROGRESS.md),
-/// şimdilik Claude Design mockup'ındaki örnek sayılarla statik.
-const _mockCityLeague = [
-  (name: 'İstanbul', reports: 12847, resolvedPct: 38, verifications: '3,1B'),
-  (name: 'Ankara', reports: 8204, resolvedPct: 41, verifications: null),
-  (name: 'İzmir', reports: 6590, resolvedPct: 52, verifications: null),
-  (name: 'Bursa', reports: 4117, resolvedPct: null, verifications: null),
-  (name: 'Antalya', reports: 3842, resolvedPct: null, verifications: null),
-  (name: 'Adana', reports: 2905, resolvedPct: null, verifications: null),
-];
+import 'data/stats_api.dart';
+import 'models/city_league_entry.dart';
 
 String _formatCount(int n) {
   final s = n.toString();
@@ -25,60 +17,118 @@ String _formatCount(int n) {
   return buffer.toString();
 }
 
-class StatsScreen extends StatelessWidget {
+class StatsScreen extends ConsumerWidget {
   const StatsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final leader = _mockCityLeague.first;
-    final rest = _mockCityLeague.skip(1).toList();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final league = ref.watch(cityLeagueProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.bgDark,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  Strings.leagueTitle,
-                  style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 30, color: AppTheme.bgLight, letterSpacing: -0.4),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(color: AppTheme.accent, borderRadius: BorderRadius.circular(8)),
-                  child: Text(
-                    Strings.leagueWeekly,
-                    style: AppTheme.mono(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.bgDark),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(cityLeagueProvider);
+            try {
+              await ref.read(cityLeagueProvider.future);
+            } catch (_) {
+              // Hata durumu zaten AsyncValue.error dalıyla ekranda gösteriliyor.
+            }
+          },
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    Strings.leagueTitle,
+                    style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 30, color: AppTheme.bgLight, letterSpacing: -0.4),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(Strings.leagueSubtitle, style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 14)),
-            const SizedBox(height: 20),
-            _LeaderCard(city: leader),
-            const SizedBox(height: 22),
-            for (var i = 0; i < rest.length; i++)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 9),
-                child: _RankRow(rank: i + 2, city: rest[i]),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(color: AppTheme.accent, borderRadius: BorderRadius.circular(8)),
+                    child: Text(
+                      Strings.leagueWeekly,
+                      style: AppTheme.mono(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.bgDark),
+                    ),
+                  ),
+                ],
               ),
-          ],
+              const SizedBox(height: 4),
+              Text(Strings.leagueSubtitle, style: TextStyle(color: AppTheme.textSecondaryDark, fontSize: 14)),
+              const SizedBox(height: 20),
+              ..._buildBody(context, ref, league),
+            ],
+          ),
         ),
       ),
     );
   }
-}
 
-typedef _City = ({String name, int reports, int? resolvedPct, String? verifications});
+  List<Widget> _buildBody(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<CityLeagueEntry>> league,
+  ) {
+    return league.when(
+      loading: () => const [
+        Padding(
+          padding: EdgeInsets.only(top: 48),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ],
+      error: (error, stackTrace) => [
+        Padding(
+          padding: const EdgeInsets.only(top: 48),
+          child: Column(
+            children: [
+              Text(
+                Strings.leagueLoadError,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppTheme.textSecondaryDark),
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () => ref.invalidate(cityLeagueProvider),
+                child: const Text(Strings.retry),
+              ),
+            ],
+          ),
+        ),
+      ],
+      data: (cities) {
+        if (cities.isEmpty) {
+          return [
+            Padding(
+              padding: const EdgeInsets.only(top: 48),
+              child: Center(
+                child: Text(Strings.leagueEmpty, style: TextStyle(color: AppTheme.textSecondaryDark)),
+              ),
+            ),
+          ];
+        }
+        final leader = cities.first;
+        final rest = cities.skip(1).toList();
+        return [
+          _LeaderCard(city: leader),
+          const SizedBox(height: 22),
+          for (var i = 0; i < rest.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 9),
+              child: _RankRow(rank: i + 2, city: rest[i]),
+            ),
+        ];
+      },
+    );
+  }
+}
 
 class _LeaderCard extends StatelessWidget {
   const _LeaderCard({required this.city});
 
-  final _City city;
+  final CityLeagueEntry city;
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +164,7 @@ class _LeaderCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    _formatCount(city.reports),
+                    _formatCount(city.reportCount),
                     style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 26, color: AppTheme.bgDark),
                   ),
                   Text(Strings.leaguePotholes, style: TextStyle(fontSize: 12, color: const Color(0xFF7A4A00), fontWeight: FontWeight.w600)),
@@ -125,11 +175,10 @@ class _LeaderCard extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              if (city.resolvedPct != null)
-                Expanded(child: _LeaderStat(value: '%${city.resolvedPct}', label: Strings.leagueResolved)),
-              if (city.verifications != null) ...[
+              Expanded(child: _LeaderStat(value: '%${city.resolvedPct}', label: Strings.leagueResolved)),
+              if (city.verifications > 0) ...[
                 const SizedBox(width: 8),
-                Expanded(child: _LeaderStat(value: city.verifications!, label: Strings.leagueVerifications)),
+                Expanded(child: _LeaderStat(value: _formatCount(city.verifications), label: Strings.leagueVerifications)),
               ],
               const SizedBox(width: 8),
               Container(
@@ -174,7 +223,7 @@ class _RankRow extends StatelessWidget {
   const _RankRow({required this.rank, required this.city});
 
   final int rank;
-  final _City city;
+  final CityLeagueEntry city;
 
   @override
   Widget build(BuildContext context) {
@@ -208,17 +257,17 @@ class _RankRow extends StatelessWidget {
               ),
             ),
           ),
-          if (emphasized && city.resolvedPct != null)
+          if (emphasized)
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(_formatCount(city.reports), style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 16, color: AppTheme.bgLight)),
+                Text(_formatCount(city.reportCount), style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 16, color: AppTheme.bgLight)),
                 Text('%${city.resolvedPct} ${Strings.leagueResolved}', style: TextStyle(fontSize: 11, color: AppTheme.textSecondaryDark)),
               ],
             )
           else
             Text(
-              _formatCount(city.reports),
+              _formatCount(city.reportCount),
               style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600, fontSize: 15, color: AppTheme.textSecondaryDark),
             ),
         ],

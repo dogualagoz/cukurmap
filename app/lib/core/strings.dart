@@ -125,6 +125,8 @@ abstract final class Strings {
   static const leagueVerifications = 'doğrulama';
   static const leaguePotholes = 'çukur';
   static const leagueThisWeek = 'BU HAFTA';
+  static const leagueLoadError = 'Lig yüklenemedi, tekrar dene.';
+  static const leagueEmpty = 'Bu hafta henüz hiç çukur bildirilmemiş.';
 
   // Profil rozetleri
   static const badgeFirstReport = 'İlk Çukur';
