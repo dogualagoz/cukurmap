@@ -10,6 +10,7 @@ export interface ReportMarker {
   lng: number;
   severity: number;
   status: ReportStatus;
+  photoPath: string | null;
 }
 
 export interface ReportDetail {
@@ -25,9 +26,15 @@ export interface ReportDetail {
   fixedCount: number;
   stillThereCount: number;
   complaintCount: number;
+  upvoteCount: number;
+  downvoteCount: number;
   createdAt: Date;
   provinceName: string | null;
   provinceSlug: string | null;
+}
+
+export interface FeedItem extends ReportDetail {
+  distanceMeters: number | null;
 }
 
 export interface CreateReportInput {
@@ -45,6 +52,8 @@ const VOTE_COUNT_COLUMN: Record<VoteType, string> = {
   fixed: 'fixed_count',
   still_there: 'still_there_count',
   complaint: 'complaint_count',
+  upvote: 'upvote_count',
+  downvote: 'downvote_count',
 };
 
 @Injectable()
@@ -99,6 +108,8 @@ export class ReportsRepository {
         inserted.fixed_count AS "fixedCount",
         inserted.still_there_count AS "stillThereCount",
         inserted.complaint_count AS "complaintCount",
+        inserted.upvote_count AS "upvoteCount",
+        inserted.downvote_count AS "downvoteCount",
         inserted.created_at AS "createdAt",
         provinces.name AS "provinceName",
         provinces.slug AS "provinceSlug"
@@ -134,6 +145,7 @@ export class ReportsRepository {
         lng: number;
         severity: number;
         status: ReportStatus;
+        photoPath: string | null;
       }[]
     >`
       SELECT
@@ -141,7 +153,8 @@ export class ReportsRepository {
         ST_Y(location) AS lat,
         ST_X(location) AS lng,
         severity,
-        status
+        status,
+        photo_path AS "photoPath"
       FROM reports
       WHERE location && ST_MakeEnvelope(
         ${filter.minLng}, ${filter.minLat}, ${filter.maxLng}, ${filter.maxLat}, 4326
@@ -170,6 +183,8 @@ export class ReportsRepository {
         reports.fixed_count AS "fixedCount",
         reports.still_there_count AS "stillThereCount",
         reports.complaint_count AS "complaintCount",
+        reports.upvote_count AS "upvoteCount",
+        reports.downvote_count AS "downvoteCount",
         reports.created_at AS "createdAt",
         provinces.name AS "provinceName",
         provinces.slug AS "provinceSlug"
@@ -179,6 +194,76 @@ export class ReportsRepository {
       LIMIT 1
     `;
     return rows[0] ? mapDetailRow(rows[0]) : null;
+  }
+
+  /** Twitter-vari feed: en yeni veya en yüksek net oylu (upvote-downvote) bildirimler, keyset sayfalama ile. */
+  async listFeed(filter: {
+    sort: 'recent' | 'score';
+    limit: number;
+    lat?: number;
+    lng?: number;
+    cursorCreatedAt?: Date;
+    cursorId?: string;
+    cursorScore?: number;
+  }): Promise<FeedItem[]> {
+    const hasLocation = filter.lat !== undefined && filter.lng !== undefined;
+    const distanceExpr = hasLocation
+      ? Prisma.sql`ST_Distance(
+          reports.location::geography,
+          ST_SetSRID(ST_MakePoint(${filter.lng}, ${filter.lat}), 4326)::geography
+        )`
+      : Prisma.sql`NULL`;
+
+    const cursorFilter =
+      filter.sort === 'score'
+        ? filter.cursorScore !== undefined &&
+          filter.cursorCreatedAt &&
+          filter.cursorId
+          ? Prisma.sql`AND (reports.upvote_count - reports.downvote_count, reports.created_at, reports.id)
+              < (${filter.cursorScore}, ${filter.cursorCreatedAt}, ${filter.cursorId}::uuid)`
+          : Prisma.empty
+        : filter.cursorCreatedAt && filter.cursorId
+          ? Prisma.sql`AND (reports.created_at, reports.id) < (${filter.cursorCreatedAt}, ${filter.cursorId}::uuid)`
+          : Prisma.empty;
+
+    const orderBy =
+      filter.sort === 'score'
+        ? Prisma.sql`ORDER BY (reports.upvote_count - reports.downvote_count) DESC, reports.created_at DESC, reports.id DESC`
+        : Prisma.sql`ORDER BY reports.created_at DESC, reports.id DESC`;
+
+    const rows = await this.prisma.$queryRaw<
+      (ReportDetailRow & { distanceMeters: number | null })[]
+    >`
+      SELECT
+        reports.id,
+        ST_Y(reports.location) AS lat,
+        ST_X(reports.location) AS lng,
+        reports.severity,
+        reports.category,
+        reports.description,
+        reports.photo_path AS "photoPath",
+        reports.status,
+        reports.confirm_count AS "confirmCount",
+        reports.fixed_count AS "fixedCount",
+        reports.still_there_count AS "stillThereCount",
+        reports.complaint_count AS "complaintCount",
+        reports.upvote_count AS "upvoteCount",
+        reports.downvote_count AS "downvoteCount",
+        reports.created_at AS "createdAt",
+        provinces.name AS "provinceName",
+        provinces.slug AS "provinceSlug",
+        ${distanceExpr} AS "distanceMeters"
+      FROM reports
+      LEFT JOIN provinces ON provinces.id = reports.province_id
+      WHERE reports.status NOT IN ('deleted', 'hidden')
+      ${cursorFilter}
+      ${orderBy}
+      LIMIT ${filter.limit}
+    `;
+    return rows.map((row) => ({
+      ...mapDetailRow(row),
+      distanceMeters: row.distanceMeters,
+    }));
   }
 
   async findStatusById(id: string): Promise<ReportStatus | null> {
@@ -237,6 +322,8 @@ export class ReportsRepository {
           reports.fixed_count AS "fixedCount",
           reports.still_there_count AS "stillThereCount",
           reports.complaint_count AS "complaintCount",
+          reports.upvote_count AS "upvoteCount",
+          reports.downvote_count AS "downvoteCount",
           reports.created_at AS "createdAt",
           provinces.name AS "provinceName",
           provinces.slug AS "provinceSlug"
@@ -262,6 +349,8 @@ interface ReportDetailRow {
   fixedCount: number;
   stillThereCount: number;
   complaintCount: number;
+  upvoteCount: number;
+  downvoteCount: number;
   createdAt: Date;
   provinceName: string | null;
   provinceSlug: string | null;

@@ -35,6 +35,7 @@ repository katmanında izole.
 | photo_path | text NULL | uploads/<uuid>.webp |
 | status | enum | active, fixed, hidden, deleted |
 | confirm_count / fixed_count / still_there_count / complaint_count | int default 0 | Denormalize; votes ile aynı transaction'da güncellenir |
+| upvote_count / downvote_count | int default 0 | Feed sıralaması için (score = upvote_count - downvote_count); votes ile aynı transaction'da güncellenir |
 | created_at / updated_at | timestamptz | |
 
 ## votes
@@ -43,9 +44,9 @@ repository katmanında izole.
 | id | uuid PK | |
 | report_id | uuid FK→reports | |
 | user_id | uuid FK→users | |
-| type | enum | confirm, fixed, still_there, complaint |
+| type | enum | confirm, fixed, still_there, complaint, upvote, downvote |
 | created_at | timestamptz | |
-| | | **UNIQUE(report_id, user_id, type)** → idempotent oy |
+| | | **UNIQUE(report_id, user_id, type)** → idempotent oy; oy değiştirme/geri alma yok (bilinen sınırlama, gelecekte ele alınacak) |
 
 ## Eşikler (env)
 - `FIXED_THRESHOLD=5` → fixed_count eşiği aşınca status=fixed ("Belediye buraya el atmış 👏")

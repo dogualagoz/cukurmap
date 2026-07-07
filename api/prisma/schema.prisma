@@ -60,6 +60,8 @@ enum VoteType {
   fixed
   still_there
   complaint
+  upvote
+  downvote
 
   @@map("vote_type")
 }
@@ -78,6 +80,8 @@ model Report {
   fixedCount      Int                             @default(0) @map("fixed_count")
   stillThereCount Int                             @default(0) @map("still_there_count")
   complaintCount  Int                             @default(0) @map("complaint_count")
+  upvoteCount     Int                             @default(0) @map("upvote_count")
+  downvoteCount   Int                             @default(0) @map("downvote_count")
   createdAt       DateTime                        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime                        @updatedAt @map("updated_at") @db.Timestamptz(6)
 

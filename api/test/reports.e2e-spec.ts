@@ -26,7 +26,20 @@ interface ReportResponse {
   fixedCount: number;
   stillThereCount: number;
   complaintCount: number;
+  upvoteCount: number;
+  downvoteCount: number;
   province: { name: string; slug: string } | null;
+}
+
+interface FeedCursor {
+  createdAt: string;
+  id: string;
+  score: number;
+}
+
+interface FeedResponse {
+  items: ReportResponse[];
+  nextCursor: FeedCursor | null;
 }
 
 // Kızılay, Ankara — falls inside province #6 per seed sanity check
@@ -283,6 +296,71 @@ describe('Reports (e2e)', () => {
     }
     expect(last?.complaintCount).toBe(3);
     expect(last?.status).toBe('hidden');
+  });
+
+  it('GET /reports/feed paginates by recency and excludes hidden reports', async () => {
+    const page1 = await request(app.getHttpServer())
+      .get('/reports/feed')
+      .set('Authorization', `Bearer ${userA}`)
+      .query({ limit: 2 })
+      .expect(200);
+    const body1 = page1.body as FeedResponse;
+    expect(body1.items.length).toBe(2);
+    expect(body1.items.every((r) => r.status !== 'hidden')).toBe(true);
+    expect(body1.nextCursor).not.toBeNull();
+
+    const page2 = await request(app.getHttpServer())
+      .get('/reports/feed')
+      .set('Authorization', `Bearer ${userA}`)
+      .query({
+        limit: 2,
+        cursorCreatedAt: body1.nextCursor!.createdAt,
+        cursorId: body1.nextCursor!.id,
+      })
+      .expect(200);
+    const body2 = page2.body as FeedResponse;
+    const page1Ids = body1.items.map((r) => r.id);
+    expect(body2.items.every((r) => !page1Ids.includes(r.id))).toBe(true);
+  });
+
+  it('POST /reports/:id/votes supports upvote/downvote idempotently and GET /reports/feed?sort=score reflects them', async () => {
+    const created = await request(app.getHttpServer())
+      .post('/reports')
+      .set('Authorization', `Bearer ${userA}`)
+      .field('lat', 38.0)
+      .field('lng', 27.0)
+      .field('severity', 2)
+      .expect(201);
+    const id = (created.body as ReportResponse).id;
+
+    const upvoted = await request(app.getHttpServer())
+      .post(`/reports/${id}/votes`)
+      .set('Authorization', `Bearer ${userB}`)
+      .send({ type: 'upvote' })
+      .expect(201);
+    expect((upvoted.body as ReportResponse).upvoteCount).toBe(1);
+
+    const repeatUpvote = await request(app.getHttpServer())
+      .post(`/reports/${id}/votes`)
+      .set('Authorization', `Bearer ${userB}`)
+      .send({ type: 'upvote' })
+      .expect(201);
+    expect((repeatUpvote.body as ReportResponse).upvoteCount).toBe(1);
+
+    await request(app.getHttpServer())
+      .post(`/reports/${id}/votes`)
+      .set('Authorization', `Bearer ${userC}`)
+      .send({ type: 'downvote' })
+      .expect(201);
+
+    const scored = await request(app.getHttpServer())
+      .get('/reports/feed')
+      .set('Authorization', `Bearer ${userA}`)
+      .query({ sort: 'score', limit: 50 })
+      .expect(200);
+    const found = (scored.body as FeedResponse).items.find((r) => r.id === id);
+    expect(found?.upvoteCount).toBe(1);
+    expect(found?.downvoteCount).toBe(1);
   });
 
   it('POST /reports/:id/votes 404 for unknown report', async () => {

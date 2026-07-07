@@ -17,6 +17,7 @@ import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateReportDto } from './dto/create-report.dto';
 import { CreateVoteDto } from './dto/create-vote.dto';
+import { QueryFeedDto } from './dto/query-feed.dto';
 import { QueryReportsDto } from './dto/query-reports.dto';
 import { ReportsService } from './reports.service';
 
@@ -43,6 +44,13 @@ export class ReportsController {
   @Get()
   list(@Query() query: QueryReportsDto) {
     return this.reportsService.findMarkers(query);
+  }
+
+  // Statik "feed" segmenti, ':id' route'undan önce tanımlanmalı; aksi halde
+  // Nest bunu bir UUID gibi eşleştirmeye çalışıp ParseUUIDPipe'ta patlar.
+  @Get('feed')
+  feed(@Query() query: QueryFeedDto) {
+    return this.reportsService.findFeed(query);
   }
 
   @Get(':id')
