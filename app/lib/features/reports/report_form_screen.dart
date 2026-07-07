@@ -176,6 +176,10 @@ class _ReportFormScreenState extends ConsumerState<ReportFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _sectionLabel(Strings.reportDescriptionLabel.toUpperCase()),
+                    const SizedBox(height: 10),
+                    _buildDescriptionField(),
+                    const SizedBox(height: 24),
                     _sectionLabel(Strings.reportLocationLabel.toUpperCase()),
                     const SizedBox(height: 10),
                     _buildLocationPicker(context),
@@ -187,10 +191,6 @@ class _ReportFormScreenState extends ConsumerState<ReportFormScreen> {
                     _sectionLabel(Strings.reportCategoryLabel.toUpperCase()),
                     const SizedBox(height: 10),
                     _buildCategoryPicker(),
-                    const SizedBox(height: 24),
-                    _sectionLabel(Strings.reportDescriptionLabel.toUpperCase()),
-                    const SizedBox(height: 10),
-                    _buildDescriptionField(),
                   ],
                 ),
               ),
@@ -372,9 +372,9 @@ class _ReportFormScreenState extends ConsumerState<ReportFormScreen> {
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 2.7,
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      childAspectRatio: 3.3,
       children: [
         for (final level in const [1, 2, 3, 4])
           _SeverityCard(
@@ -443,16 +443,16 @@ class _SeverityCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: selected ? color.withValues(alpha: 0.14) : Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: selected ? color : Colors.black.withValues(alpha: 0.07), width: selected ? 2 : 1),
         ),
         child: Row(
           children: [
-            SeverityDot(severity: severity, size: 14),
-            const SizedBox(width: 10),
+            SeverityDot(severity: severity, size: 11),
+            const SizedBox(width: 8),
             Flexible(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -461,9 +461,9 @@ class _SeverityCard extends StatelessWidget {
                   Text(
                     severityLabel(severity),
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontWeight: selected ? FontWeight.w700 : FontWeight.w600, fontSize: 14, color: AppTheme.bgDark),
+                    style: TextStyle(fontWeight: selected ? FontWeight.w700 : FontWeight.w600, fontSize: 13, color: AppTheme.bgDark),
                   ),
-                  Text('Seviye $severity', style: TextStyle(fontSize: 11.5, color: AppTheme.textSecondaryLight)),
+                  Text('Seviye $severity', style: TextStyle(fontSize: 10.5, color: AppTheme.textSecondaryLight)),
                 ],
               ),
             ),

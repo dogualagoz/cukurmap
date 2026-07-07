@@ -69,6 +69,17 @@ class AuthNotifier extends AsyncNotifier<AuthSession> {
       rethrow;
     }
   }
+
+  /// Sunucuya `PATCH /users/me` ile rumuz güncellendikten sonra yerel
+  /// oturum durumunu ve cache'lenmiş rumuzu senkronize eder.
+  Future<void> updateNickname(String nickname) async {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    await ref.read(secureStorageProvider).write(key: _kNicknameKey, value: nickname);
+    state = AsyncData(
+      AuthSession(token: current.token, userId: current.userId, nickname: nickname),
+    );
+  }
 }
 
 final authProvider = AsyncNotifierProvider<AuthNotifier, AuthSession>(

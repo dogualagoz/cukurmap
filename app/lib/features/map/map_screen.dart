@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../core/api_client.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/severity_badge.dart';
@@ -109,6 +111,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   Widget build(BuildContext context) {
     final markersAsync = ref.watch(reportMarkersProvider(_query));
+    final origin = ref.watch(apiOriginProvider);
     return Scaffold(
       backgroundColor: AppTheme.bgLight,
       body: Stack(
@@ -135,11 +138,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       Marker(
                         key: ValueKey(marker.id),
                         point: LatLng(marker.lat, marker.lng),
-                        width: 36,
-                        height: 36,
+                        width: 28,
+                        height: 28,
                         child: GestureDetector(
                           onTap: () => _showDetail(marker.id),
-                          child: _MapPin(severity: marker.severity),
+                          child: _MapPin(
+                            severity: marker.severity,
+                            photoUrl: marker.photoUrl != null ? '$origin${marker.photoUrl}' : null,
+                          ),
                         ),
                       ),
                   ],
@@ -291,28 +297,49 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 }
 
 class _MapPin extends StatelessWidget {
-  const _MapPin({required this.severity});
+  const _MapPin({required this.severity, this.photoUrl});
 
   final int severity;
+  final String? photoUrl;
 
   @override
   Widget build(BuildContext context) {
+    if (photoUrl != null) {
+      return Center(
+        child: Container(
+          width: 22,
+          height: 22,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: severityColor(severity), width: 2),
+            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3))],
+          ),
+          child: ClipOval(
+            child: CachedNetworkImage(
+              imageUrl: photoUrl!,
+              fit: BoxFit.cover,
+              errorWidget: (_, __, ___) => Container(color: severityColor(severity)),
+            ),
+          ),
+        ),
+      );
+    }
     return Center(
       child: Transform.rotate(
         angle: 0.785398,
         child: Container(
-          width: 26,
-          height: 26,
+          width: 18,
+          height: 18,
           decoration: BoxDecoration(
             color: severityColor(severity),
-            border: Border.all(color: Colors.white, width: 3),
+            border: Border.all(color: Colors.white, width: 2),
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(13),
-              topRight: Radius.circular(13),
-              bottomLeft: Radius.circular(13),
-              bottomRight: Radius.circular(3),
+              topLeft: Radius.circular(9),
+              topRight: Radius.circular(9),
+              bottomLeft: Radius.circular(9),
+              bottomRight: Radius.circular(2),
             ),
-            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4))],
+            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3))],
           ),
         ),
       ),

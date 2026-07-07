@@ -80,6 +80,30 @@ class ReportsApi {
     );
     return ReportDetail.fromJson(response.data!);
   }
+
+  Future<FeedPage> getFeed({
+    FeedSort sort = FeedSort.recent,
+    int limit = 20,
+    double? lat,
+    double? lng,
+    FeedCursor? cursor,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/reports/feed',
+      queryParameters: {
+        'sort': sort.wireName,
+        'limit': limit,
+        if (lat != null) 'lat': lat,
+        if (lng != null) 'lng': lng,
+        if (cursor != null) ...{
+          'cursorCreatedAt': cursor.createdAt,
+          'cursorId': cursor.id,
+          'cursorScore': cursor.score,
+        },
+      },
+    );
+    return FeedPage.fromJson(response.data!);
+  }
 }
 
 final reportsApiProvider = Provider<ReportsApi>((ref) {

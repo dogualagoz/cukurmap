@@ -14,11 +14,12 @@ class AdaptiveBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  static const _darkTabs = {0, 2}; // 0 kamera, 2 çukur ligi
+  static const _darkTabs = {0, 3}; // 0 kamera, 3 çukur ligi
 
   static const _items = [
     (icon: Icons.photo_camera_outlined, selectedIcon: Icons.photo_camera, label: Strings.tabCamera),
     (icon: Icons.map_outlined, selectedIcon: Icons.map, label: Strings.tabMap),
+    (icon: Icons.dynamic_feed_outlined, selectedIcon: Icons.dynamic_feed, label: Strings.tabFeed),
     (icon: Icons.emoji_events_outlined, selectedIcon: Icons.emoji_events, label: Strings.tabStats),
     (icon: Icons.person_outline, selectedIcon: Icons.person, label: Strings.tabProfile),
   ];

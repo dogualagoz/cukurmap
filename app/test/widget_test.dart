@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('app opens on camera tab with all four destinations',
+  testWidgets('app opens on camera tab with all five destinations',
       (tester) async {
     // Kamera/harita ekranları gerçek platform eklentileriyle (camera,
     // permission_handler) konuşur; bu çağrılar flutter test'in fake-async
@@ -18,6 +18,7 @@ void main() {
 
     expect(find.text(Strings.tabCamera), findsOneWidget);
     expect(find.text(Strings.tabMap), findsOneWidget);
+    expect(find.text(Strings.tabFeed), findsOneWidget);
     expect(find.text(Strings.tabStats), findsOneWidget);
     expect(find.text(Strings.tabProfile), findsOneWidget);
   });

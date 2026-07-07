@@ -25,10 +25,16 @@ String _formatDate(DateTime date) {
 }
 
 /// Marker'a tıklayınca açılan detay + oylama bottom sheet'i.
+///
+/// "Ben de gördüm" ana CTA'sı herkesin her çukura basıp geçebilmesini
+/// önlemek için varsayılan olarak GİZLİ — sadece kullanıcı fiziksel olarak
+/// çukurun yanından geçip geofence bildirimine dokunduğunda (`promptConfirm:
+/// true`) görünür. Harita pin'ine dokunma akışı bunu hiç geçirmez.
 class ReportDetailSheet extends ConsumerWidget {
-  const ReportDetailSheet({super.key, required this.reportId});
+  const ReportDetailSheet({super.key, required this.reportId, this.promptConfirm = false});
 
   final String reportId;
+  final bool promptConfirm;
 
   Future<void> _vote(BuildContext context, WidgetRef ref, VoteType type) async {
     try {
@@ -169,12 +175,14 @@ class ReportDetailSheet extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 18),
-          PrimaryPillButton(
-            label: '${Strings.voteConfirm}  ·  +1',
-            onPressed: () => _vote(context, ref, VoteType.confirm),
-            height: 54,
-          ),
+          if (promptConfirm) ...[
+            const SizedBox(height: 18),
+            PrimaryPillButton(
+              label: '${Strings.voteConfirm}  ·  +1',
+              onPressed: () => _vote(context, ref, VoteType.confirm),
+              height: 54,
+            ),
+          ],
           const SizedBox(height: 16),
           Row(
             children: [

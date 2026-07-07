@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/severity_badge.dart';
 import '../auth/auth_provider.dart';
+import '../users/data/users_api.dart';
+import 'badge_catalog.dart';
 
-/// Rozetler ve bildirim geçmişi için henüz bir kullanıcı-istatistik API'si yok
-/// (bkz. docs/PROGRESS.md, Faz 2). Sadece rumuz gerçek veri; geri kalanı
-/// Çukur Ligi ekranıyla tutarlı şekilde statik örnek içerik.
-const _mockBadges = [
-  (label: Strings.badgeFirstReport, locked: false),
-  (label: Strings.badgeNeighborhoodWatch, locked: false),
-  (label: Strings.badge50Reports, locked: false),
-  (label: Strings.badgeViralLocked, locked: true),
-];
-
+/// Bildirim geçmişi için henüz bir "kendi bildirimlerim" API'si yok
+/// (bkz. docs/PROGRESS.md). Rozetler ve istatistikler artık `userProfileProvider`
+/// üzerinden gerçek veriye bağlı; sadece bu geçmiş listesi hâlâ örnek içerik.
 const _mockHistory = [
   (title: 'Bağdat Cd. çukuru', severity: 3, when: '2 gün önce', status: Strings.statusActive),
   (title: 'Moda Sahili girişi', severity: 1, when: '1 hafta önce', status: Strings.statusFixed),
@@ -71,7 +67,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-class _ProfileContent extends StatelessWidget {
+class _ProfileContent extends ConsumerWidget {
   const _ProfileContent({required this.nickname});
 
   final String nickname;
@@ -84,7 +80,9 @@ class _ProfileContent extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(userProfileProvider);
+    final profile = profileAsync.valueOrNull;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
       children: [
@@ -124,16 +122,20 @@ class _ProfileContent extends StatelessWidget {
                 style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 22, color: AppTheme.bgDark, letterSpacing: -0.2),
               ),
             ),
+            IconButton(
+              onPressed: () => context.push('/settings'),
+              icon: const Icon(Icons.settings_outlined, color: AppTheme.bgDark),
+            ),
           ],
         ),
         const SizedBox(height: 24),
         Row(
           children: [
-            Expanded(child: _StatCard(value: '—', label: Strings.profileYourReports)),
+            Expanded(child: _StatCard(value: profile != null ? '${profile.reportCount}' : '—', label: Strings.profileYourReports)),
             const SizedBox(width: 10),
-            Expanded(child: _StatCard(value: '—', label: Strings.profileConfirms)),
+            Expanded(child: _StatCard(value: profile != null ? '${profile.confirmsReceived}' : '—', label: Strings.profileConfirms)),
             const SizedBox(width: 10),
-            Expanded(child: _StatCard(value: '—', label: Strings.profileResolved, dark: true)),
+            Expanded(child: _StatCard(value: profile != null ? '${profile.fixedReportCount}' : '—', label: Strings.profileResolved, dark: true)),
           ],
         ),
         const SizedBox(height: 24),
@@ -143,9 +145,13 @@ class _ProfileContent extends StatelessWidget {
           height: 90,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: _mockBadges.length,
+            itemCount: badgeCatalog.length,
             separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, i) => _BadgeTile(badge: _mockBadges[i]),
+            itemBuilder: (context, i) {
+              final def = badgeCatalog[i];
+              final unlocked = profile != null && def.criteria(profile);
+              return _BadgeTile(definition: def, locked: !unlocked);
+            },
           ),
         ),
         const SizedBox(height: 24),
@@ -191,41 +197,43 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-typedef _Badge = ({String label, bool locked});
-
 class _BadgeTile extends StatelessWidget {
-  const _BadgeTile({required this.badge});
+  const _BadgeTile({required this.definition, required this.locked});
 
-  final _Badge badge;
+  final BadgeDefinition definition;
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
-    return Opacity(
-      opacity: badge.locked ? 0.4 : 1,
-      child: SizedBox(
-        width: 72,
-        child: Column(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: badge.locked ? const Color(0xFFE7E2D6) : AppTheme.bgDark,
-                borderRadius: BorderRadius.circular(16),
+    return Tooltip(
+      message: definition.description,
+      child: Opacity(
+        opacity: locked ? 0.4 : 1,
+        child: SizedBox(
+          width: 72,
+          child: Column(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: locked ? const Color(0xFFE7E2D6) : AppTheme.bgDark,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  locked ? Icons.lock_outline : definition.icon,
+                  color: locked ? AppTheme.textSecondaryLight : AppTheme.accent,
+                ),
               ),
-              child: Icon(
-                badge.locked ? Icons.lock_outline : Icons.emoji_events,
-                color: badge.locked ? AppTheme.textSecondaryLight : AppTheme.accent,
+              const SizedBox(height: 7),
+              Text(
+                definition.title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                style: TextStyle(fontSize: 11, color: AppTheme.textSecondaryLightAlt, height: 1.2),
               ),
-            ),
-            const SizedBox(height: 7),
-            Text(
-              badge.label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              style: TextStyle(fontSize: 11, color: AppTheme.textSecondaryLightAlt, height: 1.2),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -267,7 +275,13 @@ class _HistoryRow extends StatelessWidget {
                   children: [
                     SeverityDot(severity: item.severity, size: 8),
                     const SizedBox(width: 6),
-                    Text('${severityLabel(item.severity)} · ${item.when}', style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondaryLight)),
+                    Flexible(
+                      child: Text(
+                        '${severityLabel(item.severity)} · ${item.when}',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondaryLight),
+                      ),
+                    ),
                   ],
                 ),
               ],

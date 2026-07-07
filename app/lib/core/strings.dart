@@ -6,6 +6,7 @@ abstract final class Strings {
   // Sekmeler
   static const tabCamera = 'Bildir';
   static const tabMap = 'Harita';
+  static const tabFeed = 'Akış';
   static const tabStats = 'Çukur Ligi';
   static const tabProfile = 'Profil';
 
@@ -127,10 +128,50 @@ abstract final class Strings {
 
   // Profil rozetleri
   static const badgeFirstReport = 'İlk Çukur';
-  static const badgeNeighborhoodWatch = 'Mahalle Bekçisi';
+  static const badgeFirstReportDesc = 'İlk çukurunu bildirdin.';
+  static const badge10Reports = '10 Bildirim';
+  static const badge10ReportsDesc = '10 çukur bildirdin.';
   static const badge50Reports = '50 Bildirim';
-  static const badgeViralLocked = 'Viral · kilitli';
+  static const badge50ReportsDesc = '50 çukur bildirdin.';
+  static const badge100Reports = '100 Bildirim';
+  static const badge100ReportsDesc = '100 çukur bildirdin.';
+  static const badgeNeighborhoodWatch = 'Mahalle Bekçisi';
+  static const badgeNeighborhoodWatchDesc = '20 bildirimi "ben de gördüm" ile doğruladın.';
+  static const badgeMunicipalityMover = 'Belediyeyi Harekete Geçirdi';
+  static const badgeMunicipalityMoverDesc = 'Bildirdiğin bir çukur onarıldı.';
+  static const badgeTrustedObserver = 'Güvenilir Gözlemci';
+  static const badgeTrustedObserverDesc = 'Bildirimlerin 10 kez doğrulandı.';
+  static const badgeViralLocked = 'Viral';
+  static const badgeViralLockedDesc = 'Çok oy alan bir bildirim yap (yakında).';
   static const profileBadgesTitle = 'ROZETLER';
   static const profileReportsTitle = 'BİLDİRİMLERİM';
   static const profileResolved = 'Çözüldü';
+
+  // Ayarlar
+  static const settingsTitle = 'Ayarlar';
+  static const settingsNotificationsTitle = 'BİLDİRİMLER';
+  static const settingsGeofenceToggleTitle = 'Yakındaki çukur bildirimleri';
+  static const settingsGeofenceToggleBody =
+      'Bir çukurun yanından geçerken "ben de gördüm" demen için bildirim gönderelim.';
+  static const settingsAccountTitle = 'HESAP';
+  static const settingsNicknameLabel = 'Rumuz';
+  static const settingsNicknameEdit = 'Düzenle';
+  static const settingsNicknameDialogTitle = 'Rumuzunu değiştir';
+  static const settingsNicknameError = 'Rumuz güncellenemedi, tekrar dene.';
+  static const settingsAboutTitle = 'HAKKINDA';
+  static const settingsVersion = 'Uygulama sürümü';
+  static const settingsPrivacyTitle = 'Gizlilik ve Yasal';
+  static const settingsPrivacyPlaceholder =
+      'Gizlilik politikası ve kullanım koşulları yakında burada olacak.';
+
+  // Feed
+  static const feedEmpty = 'Henüz bildirim yok.';
+  static const feedLoadError = 'Akış yüklenemedi, tekrar dene.';
+  static const feedSortRecent = 'Yeni';
+  static const feedSortScore = 'Popüler';
+  static const feedDistanceAway = 'uzakta';
+
+  // Geofence bildirimi
+  static const geofenceNotificationTitle = 'Yakınında bir çukur var';
+  static const geofenceNotificationBody = 'Az önce yanından geçtin. Sen de mi gördün?';
 }
