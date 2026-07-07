@@ -1,6 +1,32 @@
 # PROGRESS — Oturumlar Arası Devir
 
-## Durum: Faz 3 "Yayına hazırlık" Track A TAMAMLANDI ✅ (2026-07-07) — sonraki: Track B (kullanıcı: domain satın al, VPS deploy, App Store Connect kaydı, signing+upload, screenshot'lar)
+## Durum: Çukur Ligi gerçek veriye bağlandı ✅ (2026-07-07) — sonraki: Track B (kullanıcı: domain satın al, VPS deploy, App Store Connect kaydı, signing+upload, screenshot'lar) veya kalan mock'lar (profile history)
+
+### Bitti (Çukur Ligi → gerçek API, 2026-07-07)
+- [x] Backend `api/src/stats/` (yeni modül): `GET /stats/cities?sort=total|per_capita`
+      (JwtAuthGuard'lı, diğer GET uçlarıyla tutarlı). **Prisma Client `groupBy` kullanıldı, raw SQL
+      değil** — CLAUDE.md'deki "geo sorguları parametrik raw SQL" kuralı sadece PostGIS
+      fonksiyonlarına (ST_Distance vb.) özel; bu sorgu düz COUNT/SUM/GROUP BY olduğu için
+      idiomatic Prisma API tercih edildi (2 paralel `groupBy` — toplam + fixed — + JS'de
+      provinceId Map join, çünkü Prisma groupBy koşullu/FILTER aggregate desteklemiyor)
+- [x] Son 7 gün penceresi (`createdAt >= now()-7g`, `status != deleted`), il başına
+      `reportCount`, `resolvedPct` (fixed/total), `verifications` (confirmCount toplamı);
+      `total` sıralama rapor sayısına, `per_capita` nüfusa bölünmüş orana göre; limit 20
+- [x] docs/API.md güncellendi ("Faz 2" placeholder → gerçek response şekli;
+      `/stats/cities/:slug` ve `/stats/weekly` henüz implement edilmedi olarak işaretli kaldı)
+- [x] e2e: `api/test/stats.e2e-spec.ts` (auth guard, aggregation doğruluğu — 3 rapor/1 fixed/3
+      confirm senaryosu, per_capita sıralama, geçersiz sort → 400). **`test:e2e` script'ine
+      `--runInBand` eklendi** — artık 2 suite (reports + stats) aynı tabloları (reports/votes)
+      TRUNCATE ediyor, paralel jest worker'larda çakışırdı
+- [x] Frontend: `features/stats/models/city_league_entry.dart`, `data/stats_api.dart`
+      (`statsApiProvider`, `cityLeagueProvider` FutureProvider.autoDispose); `stats_screen.dart`
+      `StatelessWidget` → `ConsumerWidget`, `_mockCityLeague` silindi, `AsyncValue.when`
+      (loading/error+retry/empty/data), pull-to-refresh; `strings.dart`'a `leagueLoadError`/
+      `leagueEmpty` eklendi
+- [x] Doğrulama: api build/lint ✓, e2e 22/22 ✓ (yeni stats suite dahil), flutter analyze ✓
+      (0 issue), flutter test ✓
+
+### Önceki durum: Faz 3 "Yayına hazırlık" Track A TAMAMLANDI ✅ (2026-07-07)
 
 ### Bitti (Faz 3 — Yayına Hazırlık, Track A, 2026-07-07)
 - [x] Bundle ID rename: iOS `com.example.cukurMap` → `com.cukurmap.app` (project.pbxproj 6 girdi),
@@ -188,12 +214,14 @@ commit'leriyle birlikte toplandı.
    - Geofencing: simulator'de simulated location set, <150m report'a yaklaş → notification + tap deep-link → detail sheet ✓ (geofence toggle settings'de on)
    - Feed: "Akış" tab load + infinite scroll + pull-refresh + Yeni/Popüler sort toggle ✓
    - Settings: nickname edit + notification toggle state persist ✓
+   - **Çukur Ligi**: gerçek verinin göründüğü, birden fazla il/rapor girildiğinde sıralamanın
+     doğru güncellendiği, pull-to-refresh çalıştığı teyit edilmeli (bu oturumda eklendi, henüz
+     cihazda denenmedi)
 3. Test'ler + lint hep geçiş mi kontrol et: `flutter analyze`, `flutter test`, API e2e `npm run test:e2e`
 4. Sonraki faz kararı (öncelik sırası):
    - **Native bg geofencing**: iOS region monitoring + Android geofencing service (TODO comment hazır, ~Faz 6?)
    - **Real report history**: `GET /users/me/reports` + pagination; profile "Bildirimlerim" real data, test gerek
    - **Badge Viral criteria**: upvote threshold (e.g. 50+) once data gathered; now locked as design placeholder
    - **Vote undo/toggle**: all vote types idempotent-insert-only; undo flow Faz 4+ backlog
-   - **Lig stats real API**: city-stats backend + frontend real leaderboard (currently mock _mockCityLeague)
    - **Other**: form validation msgs, error handling UX, photo carousel in detail (if time), etc.
 5. Seçilen faz için plan doc'ı (brief section) yazıp başla
