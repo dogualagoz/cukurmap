@@ -104,6 +104,23 @@ class ReportsApi {
     );
     return FeedPage.fromJson(response.data!);
   }
+
+  Future<MyReportsPage> getMyReports({
+    int limit = 20,
+    MyReportsCursor? cursor,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/users/me/reports',
+      queryParameters: {
+        'limit': limit,
+        if (cursor != null) ...{
+          'cursorCreatedAt': cursor.createdAt,
+          'cursorId': cursor.id,
+        },
+      },
+    );
+    return MyReportsPage.fromJson(response.data!);
+  }
 }
 
 final reportsApiProvider = Provider<ReportsApi>((ref) {

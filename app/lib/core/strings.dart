@@ -147,6 +147,10 @@ abstract final class Strings {
   static const badgeViralLockedDesc = 'Çok oy alan bir bildirim yap (yakında).';
   static const profileBadgesTitle = 'ROZETLER';
   static const profileReportsTitle = 'BİLDİRİMLERİM';
+  static const profileHistoryEmpty =
+      'Henüz bildirimin yok. İlk çukurunu bildir, haritaya adını yaz!';
+  static const profileHistoryError = 'Bildirimlerin yüklenemedi, tekrar dene.';
+  static const loadMore = 'Daha fazla göster';
   static const profileResolved = 'Çözüldü';
 
   // Ayarlar

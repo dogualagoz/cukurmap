@@ -204,6 +204,35 @@ class FeedPage {
       );
 }
 
+/// GET /users/me/reports keyset imleci.
+class MyReportsCursor {
+  const MyReportsCursor({required this.createdAt, required this.id});
+
+  final String createdAt;
+  final String id;
+
+  factory MyReportsCursor.fromJson(Map<String, dynamic> json) => MyReportsCursor(
+        createdAt: json['createdAt'] as String,
+        id: json['id'] as String,
+      );
+}
+
+class MyReportsPage {
+  const MyReportsPage({required this.items, required this.nextCursor});
+
+  final List<ReportDetail> items;
+  final MyReportsCursor? nextCursor;
+
+  factory MyReportsPage.fromJson(Map<String, dynamic> json) => MyReportsPage(
+        items: (json['items'] as List<dynamic>)
+            .map((e) => ReportDetail.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        nextCursor: json['nextCursor'] != null
+            ? MyReportsCursor.fromJson(json['nextCursor'] as Map<String, dynamic>)
+            : null,
+      );
+}
+
 /// POST /reports 409 döndüğünde (50m/24s içinde mükerrer bildirim).
 class ReportConflictException implements Exception {
   const ReportConflictException({required this.message, required this.nearbyReportId});
