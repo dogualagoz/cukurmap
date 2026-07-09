@@ -70,6 +70,15 @@ class AuthNotifier extends AsyncNotifier<AuthSession> {
     }
   }
 
+  /// Hesap silme sonrası yerel kimliği tamamen sıfırlar: deviceId de silinir,
+  /// böylece bir sonraki açılışta gerçekten yeni bir anonim hesap oluşur.
+  Future<void> resetForAccountDeletion() async {
+    final storage = ref.read(secureStorageProvider);
+    await storage.delete(key: _kDeviceIdKey);
+    await storage.delete(key: _kTokenKey);
+    await storage.delete(key: _kNicknameKey);
+  }
+
   /// Sunucuya `PATCH /users/me` ile rumuz güncellendikten sonra yerel
   /// oturum durumunu ve cache'lenmiş rumuzu senkronize eder.
   Future<void> updateNickname(String nickname) async {

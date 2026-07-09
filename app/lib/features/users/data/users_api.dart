@@ -14,6 +14,10 @@ class UsersApi {
     return UserProfile.fromJson(response.data!);
   }
 
+  Future<void> deleteAccount() async {
+    await _dio.delete<void>('/users/me');
+  }
+
   Future<UserProfile> updateNickname(String nickname) async {
     final response = await _dio.patch<Map<String, dynamic>>(
       '/users/me',

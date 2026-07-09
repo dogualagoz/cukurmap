@@ -87,6 +87,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  Future<void> _deleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text(Strings.settingsDeleteAccountDialogTitle),
+        content: const Text(Strings.settingsDeleteAccountDialogBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text(Strings.settingsDeleteAccountCancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text(Strings.settingsDeleteAccountConfirm),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await ref.read(usersApiProvider).deleteAccount();
+      await ref.read(authProvider.notifier).resetForAccountDeletion();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      if (!mounted) return;
+      context.go('/onboarding');
+      ref.invalidate(authProvider);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(Strings.settingsDeleteAccountError)),
+      );
+    }
+  }
+
   Future<void> _openPage(String path) {
     final origin = ref.read(apiOriginProvider);
     return launchUrl(
@@ -141,6 +177,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onPressed: _editNickname,
                 child: const Text(Strings.settingsNicknameEdit),
               ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _card(
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                Strings.settingsDeleteAccountTitle,
+                style: TextStyle(fontWeight: FontWeight.w600, color: Colors.red.shade700),
+              ),
+              subtitle: Text(
+                Strings.settingsDeleteAccountSubtitle,
+                style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondaryLight),
+              ),
+              trailing: Icon(Icons.delete_forever_outlined, color: Colors.red.shade700),
+              onTap: _deleteAccount,
             ),
           ),
           const SizedBox(height: 24),

@@ -160,6 +160,17 @@ abstract final class Strings {
   static const settingsNicknameEdit = 'Düzenle';
   static const settingsNicknameDialogTitle = 'Rumuzunu değiştir';
   static const settingsNicknameError = 'Rumuz güncellenemedi, tekrar dene.';
+  static const settingsDeleteAccountTitle = 'Hesabımı sil';
+  static const settingsDeleteAccountSubtitle =
+      'Hesabını ve verilerini kalıcı olarak siler.';
+  static const settingsDeleteAccountDialogTitle = 'Hesabını silmek istediğine emin misin?';
+  static const settingsDeleteAccountDialogBody =
+      'Hesabın, rumuzun ve oyların kalıcı olarak silinir. Bildirdiğin çukurlar '
+      'haritada anonim olarak kalır (içlerinde sana ait hiçbir veri yoktur). '
+      'Bu işlem geri alınamaz.';
+  static const settingsDeleteAccountConfirm = 'Evet, hesabımı sil';
+  static const settingsDeleteAccountCancel = 'Vazgeç';
+  static const settingsDeleteAccountError = 'Hesap silinemedi, tekrar dene.';
   static const settingsAboutTitle = 'HAKKINDA';
   static const settingsVersion = 'Uygulama sürümü';
   static const settingsPrivacyPolicyTitle = 'Gizlilik Politikası';
