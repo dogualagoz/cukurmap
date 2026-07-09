@@ -68,7 +68,7 @@ enum VoteType {
 
 model Report {
   id              String                          @id @default(uuid()) @db.Uuid
-  userId          String                          @map("user_id") @db.Uuid
+  userId          String?                         @map("user_id") @db.Uuid
   location        Unsupported("geometry(Point,4326)")
   provinceId      Int?                            @map("province_id") @db.SmallInt
   severity        Int                             @db.SmallInt
@@ -85,7 +85,7 @@ model Report {
   createdAt       DateTime                        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime                        @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user     User      @relation(fields: [userId], references: [id])
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   province Province? @relation(fields: [provinceId], references: [id])
   votes    Vote[]
 
@@ -102,7 +102,7 @@ model Vote {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([reportId, userId, type])
   @@map("votes")

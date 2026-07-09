@@ -266,6 +266,49 @@ export class ReportsRepository {
     }));
   }
 
+  /** Kullanıcının kendi bildirimleri, keyset sayfalama ile. Hidden dahil
+   *  (sahibi kendi şikayet edilmiş içeriğini görebilmeli), deleted hariç. */
+  async listByUser(filter: {
+    userId: string;
+    limit: number;
+    cursorCreatedAt?: Date;
+    cursorId?: string;
+  }): Promise<ReportDetail[]> {
+    const cursorFilter =
+      filter.cursorCreatedAt && filter.cursorId
+        ? Prisma.sql`AND (reports.created_at, reports.id) < (${filter.cursorCreatedAt}, ${filter.cursorId}::uuid)`
+        : Prisma.empty;
+
+    const rows = await this.prisma.$queryRaw<ReportDetailRow[]>`
+      SELECT
+        reports.id,
+        ST_Y(reports.location) AS lat,
+        ST_X(reports.location) AS lng,
+        reports.severity,
+        reports.category,
+        reports.description,
+        reports.photo_path AS "photoPath",
+        reports.status,
+        reports.confirm_count AS "confirmCount",
+        reports.fixed_count AS "fixedCount",
+        reports.still_there_count AS "stillThereCount",
+        reports.complaint_count AS "complaintCount",
+        reports.upvote_count AS "upvoteCount",
+        reports.downvote_count AS "downvoteCount",
+        reports.created_at AS "createdAt",
+        provinces.name AS "provinceName",
+        provinces.slug AS "provinceSlug"
+      FROM reports
+      LEFT JOIN provinces ON provinces.id = reports.province_id
+      WHERE reports.user_id = ${filter.userId}::uuid
+        AND reports.status != 'deleted'
+      ${cursorFilter}
+      ORDER BY reports.created_at DESC, reports.id DESC
+      LIMIT ${filter.limit}
+    `;
+    return rows.map(mapDetailRow);
+  }
+
   async findStatusById(id: string): Promise<ReportStatus | null> {
     const rows = await this.prisma.$queryRaw<{ status: ReportStatus }[]>`
       SELECT status FROM reports WHERE id = ${id}::uuid LIMIT 1

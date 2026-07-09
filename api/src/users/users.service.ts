@@ -39,6 +39,12 @@ export class UsersService {
     };
   }
 
+  /** Hesap silme (Apple 5.1.1v): FK'ler gerisini halleder —
+   *  raporlar anonimleşir (user_id SET NULL), oylar cascade silinir. */
+  async deleteAccount(user: User): Promise<void> {
+    await this.prisma.user.delete({ where: { id: user.id } });
+  }
+
   async updateNickname(user: User, nickname: string): Promise<UserProfile> {
     const updated = await this.prisma.user.update({
       where: { id: user.id },

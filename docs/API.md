@@ -9,7 +9,11 @@ Validation: class-validator + global ValidationPipe(whitelist) · Rate limit: @n
 - `GET /users/me` → `{id, nickname, reportCount, confirmsReceived, fixedReportCount, confirmsGiven}`
   (rozetler bu istatistiklerden istemci tarafında hesaplanır, ayrı bir alan değil)
 - `PATCH /users/me` `{nickname}` (max 40 karakter)
-- `GET /users/me/reports` → kendi bildirimleri
+- `GET /users/me/reports?limit=&cursorCreatedAt=&cursorId=` → kendi bildirimleri, en yeni
+  önce, keyset sayfalama (`{items: [ReportDetail], nextCursor: {createdAt, id} | null}`).
+  `hidden` dahil (sahibi kendi şikayet edilmiş içeriğini görür), `deleted` hariç.
+- `DELETE /users/me` → **204**, 3/dk throttle — hesap silme (Apple 5.1.1v): kullanıcı kaydı
+  ve oyları silinir, bildirimleri anonimleşir (`user_id` NULL). Eski token anında geçersiz.
 
 ## Bildirimler
 - `POST /reports` (multipart) — `photo?` + `lat, lng` + `severity(1-4)` + `category?` + `description?(≤280)`

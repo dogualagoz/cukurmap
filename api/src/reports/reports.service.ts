@@ -58,6 +58,16 @@ export interface FeedPageResponse {
   nextCursor: FeedCursor | null;
 }
 
+export interface MyReportsCursor {
+  createdAt: string;
+  id: string;
+}
+
+export interface MyReportsPageResponse {
+  items: ReportDetailResponse[];
+  nextCursor: MyReportsCursor | null;
+}
+
 @Injectable()
 export class ReportsService {
   constructor(
@@ -157,6 +167,27 @@ export class ReportsService {
       })),
       nextCursor,
     };
+  }
+
+  async findMyReports(
+    userId: string,
+    query: { limit?: number; cursorCreatedAt?: string; cursorId?: string },
+  ): Promise<MyReportsPageResponse> {
+    const limit = query.limit ?? 20;
+    const items = await this.repository.listByUser({
+      userId,
+      limit,
+      cursorCreatedAt: query.cursorCreatedAt
+        ? new Date(query.cursorCreatedAt)
+        : undefined,
+      cursorId: query.cursorId,
+    });
+    const last = items.at(-1);
+    const nextCursor: MyReportsCursor | null =
+      items.length === limit && last
+        ? { createdAt: last.createdAt.toISOString(), id: last.id }
+        : null;
+    return { items: items.map(toResponse), nextCursor };
   }
 
   async vote(
