@@ -93,8 +93,10 @@ Apple'ın "Data Types" soruları için doğru beyanlar:
 
 - Unrestricted Web Access: No
 - User-Generated Content: **Yes** → Apple UGC gereksinimleri karşılanıyor:
-  şikayet (report) mekanizması var, N şikayette otomatik gizleme var,
-  kötüye kullanım engelleme (rate limit + ban) var
+  onboarding'de zorunlu EULA/koşul kabulü (sıfır tolerans maddesi), şikayet (report)
+  mekanizması (harita detayı + feed kartları), "bu içeriği gizle" (içerik bazlı engelleme),
+  N şikayette otomatik gizleme, 24 saat içinde inceleme, kötüye kullanım engelleme
+  (rate limit + ban), uygulama içi hesap silme (Ayarlar → Hesabımı sil)
 - Gambling / Violence / Mature themes: No → 4+
 
 ## Review Notes (App Review ekibine not — İngilizce)
@@ -103,11 +105,28 @@ Apple'ın "Data Types" soruları için doğru beyanlar:
 CukurMap is a crowdsourced pothole-reporting app for Turkey. No account or
 login is required — the app authenticates anonymously with a random device-
 generated UUID (only a salted hash is stored server-side). To test the full
-flow: open the app, complete onboarding, take a photo of any road surface
-(or tap "Fotoğrafsız bildir" to report without a photo), pick a severity
-level, and submit. The report appears on the shared map. Camera and location
-permissions are required for the core reporting flow. All UGC has a report/
-flag mechanism; content passing a complaint threshold is auto-hidden.
+flow: open the app, accept the Terms of Use during onboarding, take a photo
+of any road surface (or tap "Fotoğrafsız bildir" to report without a photo),
+pick a severity level, and submit. The report appears on the shared map.
+Camera and location permissions are required for the core reporting flow.
+
+UGC moderation (Guideline 1.2): users must accept the Terms of Use (zero
+tolerance for objectionable content) during onboarding before using the app.
+Every piece of content — on the map detail sheet and on every feed card —
+has both a "Report" (flag) action and a "Hide this content" action. Reported
+content is auto-hidden once a complaint threshold is reached, and all
+reports are reviewed within 24 hours; abusive users are banned server-side.
+Because all content is fully anonymous (no usernames are ever shown and no
+user identity is attached to any content), blocking is content-based:
+hiding/flagging removes that content for the user immediately.
+
+Account deletion (Guideline 5.1.1(v)): although accounts are anonymous and
+auto-created, users can delete their account in-app at any time via
+Settings → "Hesabımı sil". This deletes the server-side user record and
+votes, anonymizes their reports, and resets the device identity.
+
+Terms of Use and Privacy Policy are served at /terms.html and /privacy.html
+on the API domain and linked from onboarding and Settings.
 ```
 
 ## Screenshot planı (kullanıcı çekecek — Claude cihaz testi yapmaz)
