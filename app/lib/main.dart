@@ -11,8 +11,10 @@ import 'core/theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
-  final hasSeenOnboarding = prefs.getBool(PrefsKeys.hasSeenOnboarding) ?? false;
-  final router = buildRouter(hasSeenOnboarding ? '/camera' : '/onboarding');
+  // Koşul kabulü sonradan eklendi: eski kurulumlar da koşulları bir kez görsün.
+  final onboarded = (prefs.getBool(PrefsKeys.hasSeenOnboarding) ?? false) &&
+      (prefs.getBool(PrefsKeys.termsAcceptedV1) ?? false);
+  final router = buildRouter(onboarded ? '/camera' : '/onboarding');
   runApp(ProviderScope(child: CukurMapApp(router: router)));
 }
 

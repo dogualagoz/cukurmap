@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/api_client.dart';
 import '../../core/prefs_keys.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
@@ -85,20 +87,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  void _showPrivacyPlaceholder() {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text(Strings.settingsPrivacyTitle),
-        content: const Text(Strings.settingsPrivacyPlaceholder),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text(Strings.dialogOk),
-          ),
-        ],
-      ),
+  Future<void> _openPage(String path) {
+    final origin = ref.read(apiOriginProvider);
+    return launchUrl(
+      Uri.parse('$origin$path'),
+      mode: LaunchMode.externalApplication,
     );
+  }
+
+  Future<void> _openSupportMail() {
+    return launchUrl(Uri(scheme: 'mailto', path: Strings.supportEmail));
   }
 
   @override
@@ -159,9 +157,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const Divider(height: 1),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text(Strings.settingsPrivacyTitle, style: TextStyle(fontWeight: FontWeight.w600)),
+                  title: const Text(Strings.settingsPrivacyPolicyTitle, style: TextStyle(fontWeight: FontWeight.w600)),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: _showPrivacyPlaceholder,
+                  onTap: () => _openPage('/privacy.html'),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text(Strings.settingsTermsTitle, style: TextStyle(fontWeight: FontWeight.w600)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _openPage('/terms.html'),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text(Strings.settingsSupportTitle, style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text(Strings.supportEmail, style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondaryLight)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _openSupportMail,
                 ),
               ],
             ),

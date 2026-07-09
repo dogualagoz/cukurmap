@@ -162,9 +162,17 @@ abstract final class Strings {
   static const settingsNicknameError = 'Rumuz güncellenemedi, tekrar dene.';
   static const settingsAboutTitle = 'HAKKINDA';
   static const settingsVersion = 'Uygulama sürümü';
-  static const settingsPrivacyTitle = 'Gizlilik ve Yasal';
-  static const settingsPrivacyPlaceholder =
-      'Gizlilik politikası ve kullanım koşulları yakında burada olacak.';
+  static const settingsPrivacyPolicyTitle = 'Gizlilik Politikası';
+  static const settingsTermsTitle = 'Kullanım Koşulları';
+  static const settingsSupportTitle = 'Destek / İletişim';
+  static const supportEmail = 'dogualagoz@icloud.com';
+
+  // Kullanım koşulları kabulü (onboarding)
+  static const termsCheckboxLabel =
+      "Kullanım Koşulları'nı okudum; sakıncalı içeriğe ve kötüye kullanıma "
+      'sıfır tolerans kuralını kabul ediyorum.';
+  static const termsLinkTerms = 'Kullanım Koşulları';
+  static const termsLinkPrivacy = 'Gizlilik Politikası';
 
   // Feed
   static const feedEmpty = 'Henüz bildirim yok.';
