@@ -1,6 +1,63 @@
 # PROGRESS — Oturumlar Arası Devir
 
-## Durum: Çukur Ligi gerçek veriye bağlandı ✅ (2026-07-07) — sonraki: Track B (kullanıcı: domain satın al, VPS deploy, App Store Connect kaydı, signing+upload, screenshot'lar) veya kalan mock'lar (profile history)
+## Durum: Yayın öncesi genel inceleme (10 faz) TAMAMLANDI ✅ (2026-07-10) — sonraki: kullanıcı manuel cihaz testleri + Track B yayın adımları
+
+### Bitti (Yayın öncesi inceleme — App Store engelleri + güvenlik + cila, 2026-07-10)
+Kapsam kararları (AskUserQuestion): hepsi; Bildirimlerim = gerçek endpoint; hesap silme =
+raporlar anonimleşip kalır; UGC = içerik bazlı engelleme; iletişim = dogualagoz@icloud.com;
+X paylaşım implemente. Her faz 1 commit, 10 commit push edildi.
+
+- [x] **Faz 1 (API)**: migration `user_deletion_anonymize` — Report.userId nullable +
+      ON DELETE SET NULL, Vote CASCADE; `DELETE /users/me` (204, throttle 3/dk; guard'ın
+      findUnique'i eski token'ı bedavaya 401'ler); `GET /users/me/reports` keyset pagination
+      (QueryMyReportsDto, listByUser repo metodu, hidden dahil — sahibi kendi şikayetli
+      içeriğini görür); users.e2e-spec.ts 4 test; docs/API.md güncellendi
+- [x] **Faz 2 (yasal)**: api/public/terms.html (Apple 1.2 sıfır-tolerans + 24s inceleme
+      taahhüdü), privacy.html e-posta placeholder → gerçek adres + hesap silme bölümü,
+      STORE_LISTING.md review notes genişletildi (UGC moderasyon zinciri, silme akışı)
+- [x] **Faz 3 (EULA)**: onboarding dialoğuna zorunlu koşul checkbox'ı + terms/privacy
+      linkleri (url_launcher); `termsAcceptedV1` prefs flag — eski kurulumlar da bir kez
+      görür; settings'e Gizlilik/Koşullar/Destek (mailto) tile'ları
+- [x] **Faz 4 (hesap silme)**: settings kırmızı tile → confirm dialog → DELETE /users/me →
+      secure storage tam reset (deviceId dahil → yeni anonim kimlik) → prefs.clear() →
+      onboarding'e dön
+- [x] **Faz 5 (Bildirimlerim)**: _mockHistory silindi; MyReportsPage/Cursor modelleri,
+      getMyReports, my_reports_provider (FeedNotifier deseni), profile'da gerçek liste
+      (thumbnail, status chip, load-more, empty/error/retry, tap → detay)
+- [x] **Faz 6 (UGC)**: hiddenReportIds prefs + hidden_reports_provider; feed kartı ve detay
+      sheet'te overflow menü ("Şikayet et" = complaint oyu + lokal gizle, "Gizle" = sadece
+      lokal); feed + harita marker'ları render'da filtrelenir, cursor'lar bozulmaz
+- [x] **Faz 7 (release config)**: release build'de API_BASE_URL define yoksa StateError;
+      401'de saklı deviceId ile sessiz re-auth + tek-retry interceptor; X paylaşım
+      (twitter.com/intent/tweet + il hashtag'i); darkTheme: AppTheme.dark düzeltmesi
+- [x] **Faz 8 (API güvenlik)**: JWT 180d → 30d (re-auth sayesinde güvenli), verifyAsync
+      HS256 pin, oy 30/dk + nickname 5/dk throttle, `trust proxy 1` (Plesk nginx arkasında
+      IP throttle düzeldi), multer image/* fileFilter, sharp limitInputPixels 50MP,
+      kullanılmayan ADMIN_TOKEN her yerden silindi (env validation, compose, examples, API.md)
+- [x] **Faz 9 (cila)**: harita hata kartı + retry (artık ağ hatasında "çukur yok" demiyor),
+      kamera kalıcı-red ve konum deniedForever'a "Ayarları aç" butonları, profil stats
+      hatasında inline retry, kalan hardcoded string'ler strings.dart'a
+- [x] **Faz 10 (infra)**: prod compose api healthcheck (node fetch — slim image'da wget yok),
+      docker/backup.sh (pg_dump + uploads tar, 14 gün retention) + docs/OPERATIONS.md
+      (deploy/restore/crontab), prod log seviyesi error/warn/log + >=400 yanıt logu middleware
+- [x] Doğrulama: api lint/build ✓, e2e 30/30 ✓ (users suite dahil), flutter analyze ✓ (0 issue),
+      flutter test ✓, `flutter build ios --release --no-codesign --dart-define=API_BASE_URL=…` ✓
+      (20.6MB), prod compose config ✓
+
+### Kullanıcının manuel cihaz testleri (Claude yapamaz — yayından önce şart)
+- Fresh install → EULA checkbox akışı (onaysız geçilmiyor mu?)
+- Ayarlar → Hesabımı sil → onboarding'e dönüş + yeni rumuz; eski raporlar haritada anonim duruyor mu
+- Profil → Bildirimlerim gerçek liste + load-more + tap → detay
+- Feed/detayda şikayet & gizle → feed + haritadan kayboluyor, restart sonrası kalıcı mı
+- Uçak modunda harita: hata kartı + retry görünüyor mu
+- Kamera/konum iznini Ayarlar'dan kapat → "Ayarları aç" butonları çalışıyor mu
+- X paylaş butonu tweet composer açıyor mu
+
+### Kalan yayın-öncesi notlar
+- Android release hâlâ debug key ile imzalı (build.gradle.kts) — Play yayını öncesi TODO; iOS-first etkilenmez.
+- Track B yayın adımları aşağıda güncel (privacy e-posta adımı bu oturumda halledildi).
+
+## Önceki durum: Çukur Ligi gerçek veriye bağlandı ✅ (2026-07-07)
 
 ### Bitti (Çukur Ligi → gerçek API, 2026-07-07)
 - [x] Backend `api/src/stats/` (yeni modül): `GET /stats/cities?sort=total|per_capita`
