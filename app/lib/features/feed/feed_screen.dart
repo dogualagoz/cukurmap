@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/strings.dart';
 import '../../core/theme.dart';
+import '../reports/data/hidden_reports_provider.dart';
 import '../reports/models/report.dart';
 import 'data/feed_provider.dart';
 import 'feed_item_card.dart';
@@ -101,7 +102,10 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
         ),
       );
     }
-    if (state.items.isEmpty) {
+    // Lokal gizleme render anında uygulanır; imleçlere dokunulmaz.
+    final hidden = ref.watch(hiddenReportsProvider);
+    final items = state.items.where((i) => !hidden.contains(i.report.id)).toList();
+    if (items.isEmpty) {
       return Center(
         child: Text(Strings.feedEmpty, style: TextStyle(color: AppTheme.textSecondaryLight)),
       );
@@ -111,15 +115,15 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       child: ListView.builder(
         controller: _scrollController,
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-        itemCount: state.items.length + (state.hasMore ? 1 : 0),
+        itemCount: items.length + (state.hasMore ? 1 : 0),
         itemBuilder: (context, index) {
-          if (index >= state.items.length) {
+          if (index >= items.length) {
             return const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
             );
           }
-          final item = state.items[index];
+          final item = items[index];
           return FeedItemCard(
             item: item,
             onVote: (type) => _vote(item.report.id, type),

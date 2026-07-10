@@ -6,6 +6,7 @@ import '../../core/api_client.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/severity_badge.dart';
+import '../reports/data/hidden_reports_provider.dart';
 import '../reports/models/report.dart';
 
 const _categoryLabels = {
@@ -33,6 +34,21 @@ class FeedItemCard extends ConsumerWidget {
 
   final FeedItem item;
   final void Function(VoteType type) onVote;
+
+  void _reportContent(BuildContext context, WidgetRef ref) {
+    onVote(VoteType.complaint);
+    ref.read(hiddenReportsProvider.notifier).hide(item.report.id);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text(Strings.ugcReportedSnack)),
+    );
+  }
+
+  void _hideContent(BuildContext context, WidgetRef ref) {
+    ref.read(hiddenReportsProvider.notifier).hide(item.report.id);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text(Strings.ugcHiddenSnack)),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -77,6 +93,39 @@ class FeedItemCard extends ConsumerWidget {
                     Row(
                       children: [
                         Expanded(child: SeverityBadge(severity: report.severity, dense: true)),
+                        SizedBox(
+                          width: 28,
+                          height: 24,
+                          child: PopupMenuButton<String>(
+                            padding: EdgeInsets.zero,
+                            icon: Icon(Icons.more_horiz, size: 20, color: AppTheme.textSecondaryLight),
+                            onSelected: (action) => action == 'report'
+                                ? _reportContent(context, ref)
+                                : _hideContent(context, ref),
+                            itemBuilder: (_) => const [
+                              PopupMenuItem(
+                                value: 'report',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.flag_outlined, size: 18),
+                                    SizedBox(width: 10),
+                                    Text(Strings.ugcReportAction),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'hide',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.visibility_off_outlined, size: 18),
+                                    SizedBox(width: 10),
+                                    Text(Strings.ugcHideAction),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 6),

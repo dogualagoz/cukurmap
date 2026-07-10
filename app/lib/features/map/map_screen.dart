@@ -12,6 +12,7 @@ import '../../core/api_client.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/severity_badge.dart';
+import '../reports/data/hidden_reports_provider.dart';
 import '../reports/data/reports_api.dart';
 import '../reports/models/report.dart';
 import '../reports/report_detail_sheet.dart';
@@ -112,6 +113,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   Widget build(BuildContext context) {
     final markersAsync = ref.watch(reportMarkersProvider(_query));
     final origin = ref.watch(apiOriginProvider);
+    final hidden = ref.watch(hiddenReportsProvider);
     return Scaffold(
       backgroundColor: AppTheme.bgLight,
       body: Stack(
@@ -134,7 +136,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   maxClusterRadius: 60,
                   size: const Size(44, 44),
                   markers: [
-                    for (final marker in markersAsync.valueOrNull ?? const [])
+                    for (final marker in (markersAsync.valueOrNull ?? const [])
+                        .where((m) => !hidden.contains(m.id)))
                       Marker(
                         key: ValueKey(marker.id),
                         point: LatLng(marker.lat, marker.lng),

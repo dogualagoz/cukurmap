@@ -7,6 +7,7 @@ import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/pill_button.dart';
 import '../../core/widgets/severity_badge.dart';
+import 'data/hidden_reports_provider.dart';
 import 'data/reports_api.dart';
 import 'models/report.dart';
 
@@ -51,6 +52,30 @@ class ReportDetailSheet extends ConsumerWidget {
         const SnackBar(content: Text(Strings.voteError)),
       );
     }
+  }
+
+  /// Şikayet + lokal gizleme: sunucuya complaint oyu gider (eşikte auto-hide),
+  /// içerik bu cihazda anında gizlenir, sheet kapanır.
+  Future<void> _reportAndHide(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    await ref.read(hiddenReportsProvider.notifier).hide(reportId);
+    try {
+      await ref.read(reportsApiProvider).vote(reportId, VoteType.complaint);
+    } catch (_) {
+      // Lokal gizleme yeterli; sunucu şikayeti sonraki denemede tekrarlanabilir.
+    }
+    ref.invalidate(reportMarkersProvider);
+    navigator.pop();
+    messenger.showSnackBar(const SnackBar(content: Text(Strings.ugcReportedSnack)));
+  }
+
+  Future<void> _hideOnly(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    await ref.read(hiddenReportsProvider.notifier).hide(reportId);
+    navigator.pop();
+    messenger.showSnackBar(const SnackBar(content: Text(Strings.ugcHiddenSnack)));
   }
 
   @override
@@ -124,13 +149,35 @@ class ReportDetailSheet extends ConsumerWidget {
                     Row(
                       children: [
                         Expanded(child: SeverityBadge(severity: detail.severity, dense: true)),
-                        IconButton(
-                          onPressed: () => _vote(context, ref, VoteType.complaint),
-                          icon: const Icon(Icons.flag_outlined, size: 18),
-                          color: AppTheme.textSecondaryLight,
-                          tooltip: Strings.voteComplaint,
+                        PopupMenuButton<String>(
                           padding: EdgeInsets.zero,
+                          icon: Icon(Icons.more_horiz, size: 20, color: AppTheme.textSecondaryLight),
                           constraints: const BoxConstraints(),
+                          onSelected: (action) => action == 'report'
+                              ? _reportAndHide(context, ref)
+                              : _hideOnly(context, ref),
+                          itemBuilder: (_) => const [
+                            PopupMenuItem(
+                              value: 'report',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.flag_outlined, size: 18),
+                                  SizedBox(width: 10),
+                                  Text(Strings.ugcReportAction),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 'hide',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.visibility_off_outlined, size: 18),
+                                  SizedBox(width: 10),
+                                  Text(Strings.ugcHideAction),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

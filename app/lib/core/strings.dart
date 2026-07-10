@@ -114,6 +114,12 @@ abstract final class Strings {
       'Bildirimin haritaya eklendi. Belediye görsün, mahalle bilsin — '
       'çukur artık görünmez değil.';
   static const successShare = "'te paylaş";
+  static String shareTweet(String? province) {
+    const base = 'Bir çukuru CukurMap haritasına ekledim. '
+        'Belediye görsün, mahalle bilsin! #CukurMap';
+    if (province == null) return base;
+    return '$base #${province.replaceAll(' ', '')}';
+  }
   static const successViewMap = 'Haritada gör';
   static const successJustNow = 'az önce';
 
@@ -188,6 +194,12 @@ abstract final class Strings {
       'sıfır tolerans kuralını kabul ediyorum.';
   static const termsLinkTerms = 'Kullanım Koşulları';
   static const termsLinkPrivacy = 'Gizlilik Politikası';
+
+  // UGC şikayet / gizleme
+  static const ugcReportAction = 'Şikayet et';
+  static const ugcHideAction = 'Bu içeriği gizle';
+  static const ugcReportedSnack = 'Bildirim şikayet edildi ve senden gizlendi.';
+  static const ugcHiddenSnack = 'İçerik gizlendi.';
 
   // Feed
   static const feedEmpty = 'Henüz bildirim yok.';
