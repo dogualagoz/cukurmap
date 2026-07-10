@@ -115,7 +115,7 @@ class GeofenceService {
     const details = NotificationDetails(
       android: AndroidNotificationDetails(
         'geofence',
-        'Yakındaki çukurlar',
+        Strings.geofenceChannelName,
         importance: Importance.high,
         priority: Priority.high,
       ),

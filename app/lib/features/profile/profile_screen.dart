@@ -145,15 +145,31 @@ class _ProfileContent extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(child: _StatCard(value: profile != null ? '${profile.reportCount}' : '—', label: Strings.profileYourReports)),
-            const SizedBox(width: 10),
-            Expanded(child: _StatCard(value: profile != null ? '${profile.confirmsReceived}' : '—', label: Strings.profileConfirms)),
-            const SizedBox(width: 10),
-            Expanded(child: _StatCard(value: profile != null ? '${profile.fixedReportCount}' : '—', label: Strings.profileResolved, dark: true)),
-          ],
-        ),
+        if (profileAsync.hasError && profile == null)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  const Expanded(child: Text(Strings.profileOffline)),
+                  TextButton(
+                    onPressed: () => ref.invalidate(userProfileProvider),
+                    child: const Text(Strings.retry),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          Row(
+            children: [
+              Expanded(child: _StatCard(value: profile != null ? '${profile.reportCount}' : '—', label: Strings.profileYourReports)),
+              const SizedBox(width: 10),
+              Expanded(child: _StatCard(value: profile != null ? '${profile.confirmsReceived}' : '—', label: Strings.profileConfirms)),
+              const SizedBox(width: 10),
+              Expanded(child: _StatCard(value: profile != null ? '${profile.fixedReportCount}' : '—', label: Strings.profileResolved, dark: true)),
+            ],
+          ),
         const SizedBox(height: 24),
         Text(Strings.profileBadgesTitle, style: AppTheme.mono(color: AppTheme.textSecondaryLight)),
         const SizedBox(height: 10),

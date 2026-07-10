@@ -36,6 +36,8 @@ abstract final class Strings {
   static const filterStatus = 'Durum';
   static const filterAll = 'Hepsi';
   static const mapSearchHint = 'Mahalle veya cadde ara';
+  static const mapLoadError =
+      'Çukurlar yüklenemedi. İnternet mi gitti, yol mu bitti?';
   static const statusActive = 'Hâlâ orada';
   static const statusFixed = 'Onarıldı';
   static const statusHidden = 'Şikayet edildi';
@@ -68,6 +70,7 @@ abstract final class Strings {
       'Son 24 saatte buraya zaten birileri bildirim yapmış. '
       'Onu doğrulamak ister misin?';
   static const duplicateConfirm = 'Evet, ben de gördüm';
+  static const duplicateDefaultMessage = 'Bu çukur zaten bildirilmiş';
   static const duplicateCancel = 'Vazgeç';
 
   // Rapor detayı / oylama
@@ -88,12 +91,14 @@ abstract final class Strings {
   static const profileOffline =
       'Sunucuya ulaşamadık. Rumuzun kaçmıyor, merak etme.';
   static const retry = 'Tekrar dene';
+  static const openSettings = 'Ayarları aç';
 
   // Tehlike seviyeleri
   static const severity1 = 'Hafif tümsek';
   static const severity2 = 'Jant düşmanı';
   static const severity3 = 'Araba yutar';
   static const severity4 = 'Kayıp aracımız var';
+  static String severityLevel(int severity) => 'Seviye $severity';
 
   // Karşılama (onboarding)
   static const onboardingHeadline = 'Yoldaki çukuru\n3 saniyede işaretle.';
@@ -209,6 +214,7 @@ abstract final class Strings {
   static const feedDistanceAway = 'uzakta';
 
   // Geofence bildirimi
+  static const geofenceChannelName = 'Yakındaki çukurlar';
   static const geofenceNotificationTitle = 'Yakınında bir çukur var';
   static const geofenceNotificationBody = 'Az önce yanından geçtin. Sen de mi gördün?';
 }

@@ -191,7 +191,26 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.accent),
               ),
             ),
-          if (markersAsync.valueOrNull?.isEmpty ?? false)
+          if (markersAsync.hasError && !markersAsync.isLoading)
+            Center(
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(Strings.mapLoadError, textAlign: TextAlign.center),
+                      const SizedBox(height: 10),
+                      OutlinedButton(
+                        onPressed: () => ref.invalidate(reportMarkersProvider(_query)),
+                        child: const Text(Strings.retry),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else if (markersAsync.valueOrNull?.isEmpty ?? false)
             Center(
               child: Card(
                 child: Padding(

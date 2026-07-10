@@ -40,6 +40,7 @@ class _ReportFormScreenState extends ConsumerState<ReportFormScreen> {
 
   LatLng? _position;
   bool _locating = true;
+  bool _locationDeniedForever = false;
   String? _locationError;
   int _severity = 2;
   ReportCategory _category = ReportCategory.cukur;
@@ -73,6 +74,7 @@ class _ReportFormScreenState extends ConsumerState<ReportFormScreen> {
         if (!mounted) return;
         setState(() {
           _locating = false;
+          _locationDeniedForever = permission == LocationPermission.deniedForever;
           _locationError = Strings.locationPermissionDenied;
         });
         return;
@@ -315,7 +317,19 @@ class _ReportFormScreenState extends ConsumerState<ReportFormScreen> {
             children: [
               Text(_locationError ?? Strings.locationPermissionDenied, textAlign: TextAlign.center),
               const SizedBox(height: 12),
-              OutlinedButton(onPressed: _locate, child: const Text(Strings.retry)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  OutlinedButton(onPressed: _locate, child: const Text(Strings.retry)),
+                  if (_locationDeniedForever) ...[
+                    const SizedBox(width: 10),
+                    OutlinedButton(
+                      onPressed: Geolocator.openAppSettings,
+                      child: const Text(Strings.openSettings),
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
         ),
@@ -463,7 +477,7 @@ class _SeverityCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontWeight: selected ? FontWeight.w700 : FontWeight.w600, fontSize: 13, color: AppTheme.bgDark),
                   ),
-                  Text('Seviye $severity', style: TextStyle(fontSize: 10.5, color: AppTheme.textSecondaryLight)),
+                  Text(Strings.severityLevel(severity), style: TextStyle(fontSize: 10.5, color: AppTheme.textSecondaryLight)),
                 ],
               ),
             ),

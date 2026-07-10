@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/strings.dart';
 import '../../auth/auth_provider.dart';
 import '../models/report.dart';
 
@@ -36,7 +37,7 @@ class ReportsApi {
         final nested = e.response?.data is Map ? (e.response!.data as Map)['message'] : null;
         if (nested is Map) {
           throw ReportConflictException(
-            message: nested['message'] as String? ?? 'Bu çukur zaten bildirilmiş',
+            message: nested['message'] as String? ?? Strings.duplicateDefaultMessage,
             nearbyReportId: nested['nearbyReportId'] as String,
           );
         }

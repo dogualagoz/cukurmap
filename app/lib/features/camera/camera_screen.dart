@@ -18,6 +18,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
   CameraController? _controller;
   Future<void>? _initializeFuture;
   bool _permissionDenied = false;
+  bool _permanentlyDenied = false;
 
   @override
   void initState() {
@@ -30,7 +31,12 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     try {
       final status = await Permission.camera.request();
       if (!status.isGranted) {
-        if (mounted) setState(() => _permissionDenied = true);
+        if (mounted) {
+          setState(() {
+            _permissionDenied = true;
+            _permanentlyDenied = status.isPermanentlyDenied;
+          });
+        }
         return;
       }
       final cameras = await availableCameras();
@@ -124,6 +130,19 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
                 ),
                 const SizedBox(height: 24),
                 PrimaryPillButton(label: Strings.reportWithoutPhoto, onPressed: _reportWithoutPhoto, height: 52),
+                if (_permanentlyDenied) ...[
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: openAppSettings,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.bgLight,
+                      side: BorderSide(color: Colors.white.withValues(alpha: 0.28)),
+                      shape: const StadiumBorder(),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    child: const Text(Strings.openSettings),
+                  ),
+                ],
               ],
             ),
           ),
