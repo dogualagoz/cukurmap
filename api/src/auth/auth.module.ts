@@ -13,7 +13,8 @@ import { UserThrottlerGuard } from './user-throttler.guard';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.getOrThrow<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '180d' },
+        // App 401'de saklı deviceId ile sessizce re-auth ediyor; kısa ömür güvenli.
+        signOptions: { expiresIn: '30d' },
       }),
     }),
   ],

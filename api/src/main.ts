@@ -8,6 +8,8 @@ import { UPLOADS_DIR } from './reports/photo-pipeline.service';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // Nginx/Plesk reverse proxy arkasında gerçek istemci IP'si (throttler için).
+  app.set('trust proxy', 1);
   app.use(helmet());
   app.useStaticAssets(UPLOADS_DIR, { prefix: '/uploads' });
   // Gizlilik politikası vb. statik sayfalar (App Store privacy URL buradan servis edilir)

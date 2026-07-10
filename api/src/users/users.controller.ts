@@ -37,6 +37,7 @@ export class UsersController {
   }
 
   @Patch('me')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   updateNickname(@CurrentUser() user: User, @Body() dto: UpdateNicknameDto) {
     return this.usersService.updateNickname(user, dto.nickname);
   }

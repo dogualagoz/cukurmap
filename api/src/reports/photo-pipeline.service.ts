@@ -21,7 +21,7 @@ export class PhotoPipelineService {
     const filename = `${randomUUID()}.webp`;
     await mkdir(UPLOADS_DIR, { recursive: true });
     try {
-      await sharp(buffer, { failOn: 'error' })
+      await sharp(buffer, { failOn: 'error', limitInputPixels: 50_000_000 })
         .rotate()
         .resize({
           width: MAX_DIMENSION,

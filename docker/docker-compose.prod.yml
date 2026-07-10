@@ -36,7 +36,6 @@ services:
       PORT: 3000
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       DEVICE_PEPPER: ${DEVICE_PEPPER:?DEVICE_PEPPER is required}
-      ADMIN_TOKEN: ${ADMIN_TOKEN:?ADMIN_TOKEN is required}
       FIXED_THRESHOLD: ${FIXED_THRESHOLD:-5}
       HIDE_THRESHOLD: ${HIDE_THRESHOLD:-3}
     ports:

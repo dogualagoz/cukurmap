@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -31,7 +32,20 @@ export class ReportsController {
   @Post()
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @UseInterceptors(
-    FileInterceptor('photo', { limits: { fileSize: MAX_PHOTO_BYTES } }),
+    FileInterceptor('photo', {
+      limits: { fileSize: MAX_PHOTO_BYTES },
+      // MIME allowlist ilk kapı; asıl doğrulama sharp decode (photo-pipeline).
+      fileFilter: (_req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+          cb(null, true);
+        } else {
+          cb(
+            new BadRequestException('Sadece görsel dosyaları kabul edilir'),
+            false,
+          );
+        }
+      },
+    }),
   )
   create(
     @CurrentUser() user: User,
@@ -59,6 +73,7 @@ export class ReportsController {
   }
 
   @Post(':id/votes')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   vote(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: User,

@@ -43,9 +43,5 @@ Validation: class-validator + global ValidationPipe(whitelist) · Rate limit: @n
 - `GET /stats/cities/:slug` → toplam, çözülme oranı, "en efsane çukur" — henüz implement edilmedi
 - `GET /stats/weekly` → haftalık özet — henüz implement edilmedi
 
-## Admin (X-Admin-Token header, env'den, timing-safe compare)
-- `DELETE /admin/reports/:id`
-- `POST /admin/users/:id/ban`
-
 ## Statik
 - `GET /uploads/<uuid>.webp` — UUID dosya adı, path traversal imkânsız

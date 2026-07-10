@@ -30,7 +30,9 @@ export class JwtAuthGuard implements CanActivate {
 
     let payload: { sub: string };
     try {
-      payload = await this.jwt.verifyAsync<{ sub: string }>(token);
+      payload = await this.jwt.verifyAsync<{ sub: string }>(token, {
+        algorithms: ['HS256'],
+      });
     } catch {
       throw new UnauthorizedException();
     }
