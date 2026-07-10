@@ -70,6 +70,34 @@ class AuthNotifier extends AsyncNotifier<AuthSession> {
     }
   }
 
+  /// Token süresi dolduğunda (401) saklı deviceId ile sessizce yeni JWT alır.
+  /// Anonim auth idempotent olduğu için kullanıcıya hiçbir şey sorulmaz.
+  Future<String?> reauthenticate() async {
+    final storage = ref.read(secureStorageProvider);
+    final deviceId = await storage.read(key: _kDeviceIdKey);
+    if (deviceId == null) return null;
+    try {
+      final dio = ref.read(dioProvider);
+      final response = await dio.post<Map<String, dynamic>>(
+        '/auth/anonymous',
+        data: {'deviceId': deviceId},
+      );
+      final body = response.data!;
+      final user = body['user'] as Map<String, dynamic>;
+      final session = AuthSession(
+        token: body['token'] as String,
+        userId: user['id'] as String,
+        nickname: user['nickname'] as String,
+      );
+      await storage.write(key: _kTokenKey, value: session.token);
+      await storage.write(key: _kNicknameKey, value: session.nickname);
+      state = AsyncData(session);
+      return session.token;
+    } on DioException {
+      return null;
+    }
+  }
+
   /// Hesap silme sonrası yerel kimliği tamamen sıfırlar: deviceId de silinir,
   /// böylece bir sonraki açılışta gerçekten yeni bir anonim hesap oluşur.
   Future<void> resetForAccountDeletion() async {
@@ -95,7 +123,8 @@ final authProvider = AsyncNotifierProvider<AuthNotifier, AuthSession>(
   AuthNotifier.new,
 );
 
-/// Yetkili istekler için Authorization header'lı Dio.
+/// Yetkili istekler için Authorization header'lı Dio. Oturum ortasında token
+/// süresi dolarsa (401) bir kez sessiz re-auth deneyip isteği tekrarlar.
 final authedDioProvider = Provider<Dio>((ref) {
   final dio = ref.watch(dioProvider);
   final session = ref.watch(authProvider).valueOrNull;
@@ -103,5 +132,26 @@ final authedDioProvider = Provider<Dio>((ref) {
   if (session != null) {
     authed.options.headers['Authorization'] = 'Bearer ${session.token}';
   }
+  authed.interceptors.add(
+    InterceptorsWrapper(
+      onError: (error, handler) async {
+        final alreadyRetried = error.requestOptions.extra['retried401'] == true;
+        if (error.response?.statusCode != 401 || alreadyRetried) {
+          return handler.next(error);
+        }
+        final newToken = await ref.read(authProvider.notifier).reauthenticate();
+        if (newToken == null) return handler.next(error);
+        final options = error.requestOptions;
+        options.headers['Authorization'] = 'Bearer $newToken';
+        options.extra['retried401'] = true;
+        try {
+          final response = await Dio(dio.options).fetch<dynamic>(options);
+          return handler.resolve(response);
+        } on DioException catch (e) {
+          return handler.next(e);
+        }
+      },
+    ),
+  );
   return authed;
 });

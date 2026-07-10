@@ -28,7 +28,7 @@ class CukurMapApp extends ConsumerWidget {
     return MaterialApp.router(
       title: Strings.appName,
       theme: AppTheme.light,
-      darkTheme: AppTheme.light,
+      darkTheme: AppTheme.dark,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api_client.dart';
 import '../../core/strings.dart';
@@ -15,6 +16,13 @@ class ReportSuccessScreen extends ConsumerWidget {
   const ReportSuccessScreen({super.key, required this.report});
 
   final ReportDetail report;
+
+  Future<void> _shareOnX() {
+    final uri = Uri.https('twitter.com', '/intent/tweet', {
+      'text': Strings.shareTweet(report.provinceName),
+    });
+    return launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -67,14 +75,12 @@ class ReportSuccessScreen extends ConsumerWidget {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton.icon(
-                      onPressed: null,
+                      onPressed: _shareOnX,
                       icon: const Text('𝕏', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
                       label: const Text(Strings.successShare),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.bgDark,
-                        disabledBackgroundColor: AppTheme.bgDark,
                         foregroundColor: AppTheme.bgLight,
-                        disabledForegroundColor: AppTheme.bgLight,
                         shape: const StadiumBorder(),
                         textStyle: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 16.5),
                       ),
