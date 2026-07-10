@@ -1,13 +1,28 @@
 import { join } from 'node:path';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { UPLOADS_DIR } from './reports/photo-pipeline.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: ['error', 'warn', 'log'],
+  });
+  // Hafif erişim logu: yalnız hatalı (>=400) yanıtlar, bağımlılıksız.
+  const httpLogger = new Logger('HTTP');
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    res.on('finish', () => {
+      if (res.statusCode >= 400) {
+        httpLogger.warn(
+          `${req.method} ${req.originalUrl} -> ${res.statusCode}`,
+        );
+      }
+    });
+    next();
+  });
   // Nginx/Plesk reverse proxy arkasında gerçek istemci IP'si (throttler için).
   app.set('trust proxy', 1);
   app.use(helmet());
